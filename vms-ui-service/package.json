@@ -1,0 +1,25 @@
+{
+    "name": "vms-ui-service",
+    "version": "1.0.0",
+    "description": "",
+    "main": "app.ts",
+    "type": "module",
+    "scripts": {
+        "start": "node src/app.ts",
+        "dev": "tsx watch src/app.ts",
+        "build": "esbuild src/app.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/app.js --external:amqplib --external:dotenv",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "amqplib": "^2.2.0",
+        "dotenv": "^18.0.7"
+    },
+    "devDependencies": {
+        "@types/amqplib": "^0.10.8",
+        "@types/node": "^26.6.5",
+        "esbuild": "^0.28.2",
+        "tsx": "^4.23.15"
+    }
+}

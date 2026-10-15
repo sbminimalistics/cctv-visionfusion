@@ -1,0 +1,42 @@
+{
+  "rabbit_version": "4.0.0",
+  "vhosts": [
+    {
+      "name": "vms"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "vms.events",
+      "vhost": "vms",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "vms.alerts",
+      "vhost": "vms",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 5000,
+        "x-overflow": "drop-head",
+        "x-message-ttl": 86400000
+      }
+    }
+  ],
+  "bindings": [
+    {
+      "source": "vms.events",
+      "vhost": "vms",
+      "destination": "vms.alerts",
+      "destination_type": "queue",
+      "routing_key": "camera.#",
+      "arguments": {}
+    }
+  ]
+}

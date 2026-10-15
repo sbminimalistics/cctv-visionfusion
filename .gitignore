@@ -1,0 +1,35 @@
+# terraform execution cache directory
+**/.terraform/
+*.tfstate*.tfstate.backup
+
+# terraform credential files and secret variables
+*.tfvars
+*.tfvars.json
+
+# terraform infrastructure mapping details
+*.tfstate
+*.tfstate.backup
+
+# custom local override layers
+override.tf
+override.tf.json
+
+# runtime registry caches
+.terraform.rc
+terraform.rc
+
+# crash logs and temporary execution locks
+crash.log
+
+# local configurations
+config.yml
+
+**/tmp/
+
+.env*
+
+**/node_modules
+**/dist
+
+*.exe
+vms-backend-service/vms-app

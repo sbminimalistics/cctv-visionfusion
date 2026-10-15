@@ -1,0 +1,20 @@
+cameras:
+    - name: "camera-location-or-id"
+      ip: "0.0.0.0"
+      port: 80
+      user: "api_user_placeholder"
+      password: "secure_password_placeholder"
+
+database:
+    host: "localhost"
+    port: 5432
+    name: "vms_production"
+    user: "db_user_placeholder"
+    password: "" # inject via DB_PASSWORD environment variable
+
+rabbitmq:
+    host: "localhost"
+    port: 5672
+    user: "producer_worker"
+    password: "" # inject via RMQ_PASS environment variable
+    vhost: "/vms"
