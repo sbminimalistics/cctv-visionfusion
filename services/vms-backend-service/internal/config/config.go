@@ -19,15 +19,15 @@ type DBConfig struct {
 	Host     string `yaml:"host" env:"DB_HOST" env-default:"localhost"`
 	Port     port   `yaml:"port" env:"DB_PORT" env-default:"5432"`
 	Name     string `yaml:"name" env:"DB_NAME" env-default:"postgres"`
-	User     string `yaml:"user" env:"DB_PRODUCER_USER" env-default:"user"`
-	Password string `yaml:"password" env:"DB_PRODUCER_PASSWORD"`
+	User     string `yaml:"user" env:"BACKEND_DB_USER" env-default:"user"`
+	Password string `yaml:"password" env:"BACKEND_DB_PASSWORD"`
 }
 
 type RabbitMQConfig struct {
 	Host     string `yaml:"host" env:"RMQ_HOST" env-default:"localhost"`
 	Port     port   `yaml:"port" env:"RMQ_PORT" env-default:"5672"`
-	User     string `yaml:"user" env:"RMQ_PRODUCER_USER" env-default:"producer_worker"`
-	Password string `yaml:"password" env:"RMQ_PRODUCER_PASS"`
+	User     string `yaml:"user" env:"BACKEND_RMQ_USER" env-default:"backend_worker"`
+	Password string `yaml:"password" env:"BACKEND_RMQ_PASS"`
 	VHost    string `yaml:"vhost" env:"RMQ_VHOST" env-default:"/vms"`
 }
 

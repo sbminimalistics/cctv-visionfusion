@@ -5,7 +5,6 @@ export default class RMQClient {
     connectionOptions: amqp.Options.Connect;
 
     EXCHANGE_NAME = "vms.events";
-    ROUTING_KEY = "camera.#";
 
     constructor() {
         this.connectionOptions = {};

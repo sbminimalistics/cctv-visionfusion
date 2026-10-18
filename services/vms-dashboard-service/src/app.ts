@@ -6,8 +6,8 @@ dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 
 const RMQ_HOST = process.env.RMQ_HOST || "localhost";
 const RMQ_PORT = process.env.RMQ_PORT || "5672";
-const RMQ_USER = process.env.RMQ_CONSUMER_USER || "consumer_worker";
-const RMQ_PASS = process.env.RMQ_CONSUMER_PASS;
+const RMQ_USER = process.env.DASHBOARD_RMQ_USER || "consumer_worker";
+const RMQ_PASS = process.env.DASHBOARD_RMQ_PASS;
 const RMQ_VHOST = process.env.RMQ_VHOST || "/vms";
 
 async function bootstrap() {

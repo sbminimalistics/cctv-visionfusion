@@ -27,46 +27,46 @@ variable "db_port" {
   default     = "5432"
 }
 
-variable "db_admin_pass" {
+variable "admin_db_pass" {
   type        = string
   sensitive   = true
   description = "Database admin password"
 }
 
-variable "db_producer_user" {
+variable "backend_db_user" {
   type        = string
-  description = "Database user name used for producer service"
-  default     = "producer"
+  description = "Database user name used for backend service"
+  default     = "backend_db"
 }
 
-variable "db_producer_pass" {
+variable "backend_db_pass" {
   type        = string
   sensitive   = true
-  description = "Database password used for producer service"
+  description = "Database password used for backend service"
 }
 
-variable "db_producer_schema" {
+variable "backend_db_schema" {
   type        = string
   description = "Database schema used for producer service"
-  default     = "vms_producer"
+  default     = "vms_backend"
 }
 
-variable "db_consumer_user" {
+variable "dashboard_db_user" {
   type        = string
-  description = "Database user name used for consumer service"
-  default     = "consumer"
+  description = "Database user name used for dashboard service"
+  default     = "dashboard_db"
 }
 
-variable "db_consumer_pass" {
+variable "dashboard_db_pass" {
   type        = string
   sensitive   = true
-  description = "Database password used for consumer service"
+  description = "Database password used for dashboard service"
 }
 
-variable "db_consumer_schema" {
+variable "dashboard_db_schema" {
   type        = string
-  description = "Database schema used for consumer service"
-  default     = "vms_consumer"
+  description = "Database schema used for dashboard service"
+  default     = "vms_dashboard"
 }
 
 variable "rmq_host" {
@@ -93,32 +93,86 @@ variable "rmq_erlang_cookie" {
   sensitive   = true
 }
 
-variable "rmq_admin_pass" {
+variable "admin_rmq_pass" {
   type        = string
   sensitive   = true
   description = "The main bootstrapper admin password used by Terraform"
 }
 
-variable "rmq_producer_user" {
+variable "backend_rmq_user" {
   type        = string
-  description = "Username for any service acting as a message producer"
-  default     = "rmq_producer"
+  description = "Username for backend service"
+  default     = "backend_rmq"
 }
 
-variable "rmq_producer_pass" {
+variable "backend_rmq_pass" {
   type        = string
   sensitive   = true
-  description = "Password for any service acting as a message producer"
+  description = "Password for backend service"
 }
 
-variable "rmq_consumer_user" {
+variable "dashboard_rmq_user" {
   type        = string
-  description = "Username for consumer services"
-  default     = "rmq_consumer"
+  description = "Username for dashboard service"
+  default     = "dashboard_rmq"
 }
 
-variable "rmq_consumer_pass" {
+variable "dashboard_rmq_pass" {
   type        = string
   sensitive   = true
-  description = "Password for consumer services"
+  description = "Password for dashboard service"
+}
+
+variable "downloader_rmq_user" {
+  type        = string
+  description = "Username for downloader service"
+  default     = "downloader_rmq"
+}
+
+variable "downloader_rmq_pass" {
+  type        = string
+  sensitive   = true
+  description = "Password for downloader service"
+}
+
+variable "admin_minio_pass" {
+  type        = string
+  sensitive   = true
+  description = "The minIO admin password used by Terraform"
+}
+
+variable "minio_host" {
+  type        = string
+  description = "minIO service host"
+  default     = "vms"
+}
+
+variable "minio_port" {
+  type        = string
+  description = "minIO service port"
+  default     = "9000"
+}
+
+variable "dashboard_minio_user" {
+  type        = string
+  description = "Username for dashboard service"
+  default     = "dashboard_minio"
+}
+
+variable "dashboard_minio_pass" {
+  type        = string
+  sensitive   = true
+  description = "Password for dashboard service"
+}
+
+variable "downloader_minio_user" {
+  type        = string
+  description = "Username for downloader service"
+  default     = "downloader_minio"
+}
+
+variable "downloader_minio_pass" {
+  type        = string
+  sensitive   = true
+  description = "Password for downloader service"
 }

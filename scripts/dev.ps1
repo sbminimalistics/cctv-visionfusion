@@ -34,8 +34,14 @@ Write-Host "[dev] starting local infrastructure..." -ForegroundColor Cyan
 $rmqPort = if ($env:RMQ_PORT) { $env:RMQ_PORT } else { "5672" }
 $dbPort  = if ($env:DB_PORT)  { $env:DB_PORT }  else { "5432" }
 
+Write-Host "[dev] setting up docker dev-network..." -ForegroundColor DarkCyan
+if (-not (docker network ls -q -f name=dev-network)) {
+    docker network create dev-network | Out-Null
+}
+
 Write-Host "[dev] spinning up rabbitmq-dev broker box..." -ForegroundColor Gray
 docker run -d --name rmq-dev `
+  --network dev-network `
   -p "${rmqPort}:5672" `
   -p 15672:15672 `
   -v "${PSScriptRoot}/../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro" `
@@ -44,31 +50,29 @@ docker run -d --name rmq-dev `
   -e "RABBITMQ_ERLANG_COOKIE=local_secret_development_cookie_token_991" `
   rabbitmq:4-management-alpine
 
-
-
 # launch postgresql database instance
 $dbName = if (${env:DB_NAME}) { $env:DB_NAME } else {"vms_database"}
 $dbPort = if (${env:DB_PORT}) { $env:DB_PORT } else {"5432"}
-$producerUser = $env:DB_PRODUCER_USER
-$producerPass = $env:DB_PRODUCER_PASSWORD
-$producerSchema = $env:DB_PRODUCER_SCHEMA
-$consumerUser = $env:DB_CONSUMER_USER
-$consumerPass = $env:DB_CONSUMER_PASSWORD
-$consumerSchema = $env:DB_CONSUMER_SCHEMA
+$backendUser = $env:BACKEND_DB_USER
+$backendPass = $env:BACKEND_DB_PASSWORD
+$backendSchema = $env:BACKEND_DB_SCHEMA
+$dashboardUser = $env:DASHBOARD_DB_USER
+$dashboardPass = $env:DASHBOARD_DB_PASSWORD
+$dashboardSchema = $env:DASHBOARD_DB_SCHEMA
 
 $initSqlPath = "${PSScriptRoot}/init-multi-user.sql"
 $sqlContent = @"
 -- Create application-specific roles/users
-CREATE USER ${producerUser} WITH PASSWORD '${producerPass}';
-CREATE USER ${consumerUser} WITH PASSWORD '${consumerPass}';
+CREATE USER ${backendUser} WITH PASSWORD '${backendPass}';
+CREATE USER ${dashboardUser} WITH PASSWORD '${dashboardPass}';
 
 -- provision schemas
-CREATE SCHEMA ${producerSchema} AUTHORIZATION ${producerUser};
-CREATE SCHEMA ${consumerSchema} AUTHORIZATION ${consumerUser};
+CREATE SCHEMA ${backendSchema} AUTHORIZATION ${backendUser};
+CREATE SCHEMA ${dashboardSchema} AUTHORIZATION ${dashboardUser};
 
 -- grant targeted schema permissions to maintain complete application safety boundaries
-GRANT ALL ON SCHEMA ${producerSchema} TO ${producerUser};
-GRANT ALL ON SCHEMA ${consumerSchema} TO ${consumerUser};
+GRANT ALL ON SCHEMA ${backendSchema} TO ${backendUser};
+GRANT ALL ON SCHEMA ${dashboardSchema} TO ${dashboardUser};
 "@
 Set-Content -Path ${initSqlPath} -Value ${sqlContent} -Encoding UTF8
 
@@ -110,19 +114,39 @@ Start-Sleep -Seconds 2
 
 Write-Host "[dev] rabbitmq is operational. applying user accounts..." -ForegroundColor Cyan
 
-# configure the go application profile boundary rules
-docker exec rmq-dev rabbitmqctl add_user "${env:RMQ_PRODUCER_USER}" "${env:RMQ_PRODUCER_PASS}" | Out-Null
-docker exec rmq-dev rabbitmqctl set_permissions -p "${env:RMQ_VHOST}" "${env:RMQ_PRODUCER_USER}" ".*" ".*" ".*" | Out-Null
+# configure backend application rmq user
+docker exec rmq-dev rabbitmqctl add_user "${env:BACKEND_RMQ_USER}" "${env:BACKEND_RMQ_PASS}" | Out-Null
+docker exec rmq-dev rabbitmqctl set_permissions -p "${env:RMQ_VHOST}" "${env:BACKEND_RMQ_USER}" ".*" ".*" ".*" | Out-Null
 
-# configure the node application profile boundary rules
-docker exec rmq-dev rabbitmqctl add_user "${env:RMQ_CONSUMER_USER}" "${env:RMQ_CONSUMER_PASS}" | Out-Null
-docker exec rmq-dev rabbitmqctl set_permissions -p "${env:RMQ_VHOST}" "${env:RMQ_CONSUMER_USER}" "^$" "^$" ".*" | Out-Null
+# configure dashboard application rmq user
+docker exec rmq-dev rabbitmqctl add_user "${env:DASHBOARD_RMQ_USER}" "${env:DASHBOARD_RMQ_PASS}" | Out-Null
+docker exec rmq-dev rabbitmqctl set_permissions -p "${env:RMQ_VHOST}" "${env:DASHBOARD_RMQ_USER}" "^$" "^$" ".*" | Out-Null
+
+# configure downloader application rmq user
+docker exec rmq-dev rabbitmqctl add_user "${env:DOWNLOADER_RMQ_USER}" "${env:DOWNLOADER_RMQ_PASS}" | Out-Null
+docker exec rmq-dev rabbitmqctl set_permissions -p "${env:RMQ_VHOST}" "${env:DOWNLOADER_RMQ_USER}" "^$" ".*" ".*" | Out-Null
 
 Write-Host "[dev] infrastructure provisioning complete. ports are stable." -ForegroundColor Green
 
 # dynamic sleep buffer giving database and messaging daemons a window to initialize listeners
-Write-Host "[dev] waiting 5 seconds for communication ports to stabilize..." -ForegroundColor Yellow
-Start-Sleep -Seconds 5
+Write-Host "[dev] waiting 2 seconds for communication ports to stabilize..." -ForegroundColor Yellow
+Start-Sleep -Seconds 2
+
+Write-Host "[dev] building python image..." -ForegroundColor Blue
+docker build -t opencv5-image "${PSScriptRoot}/../services/vms-cv-service"
+
+Write-Host "[dev] spinning up python container..." -ForegroundColor Blue
+docker run --name opencv5-worker `
+--add-host=host.docker.internal:host-gateway `
+  --network dev-network `
+  -e RABBITMQ_HOST=${env:RMQ_HOST} `
+  -e RABBITMQ_PORT=${env:RMQ_PORT} `
+  -e RABBITMQ_VHOST=${env:RMQ_VHOST} `
+  -e RABBITMQ_QUEUE=vms.alerts `
+  -e DOWNLOADER_RMQ_USER=${env:DOWNLOADER_RMQ_USER} `
+  -e DOWNLOADER_RMQ_PASS=${env:DOWNLOADER_RMQ_PASS} `
+  -d `
+  opencv5-image | Out-Null
 
 Write-Host "[dev] launching workspace components natively..." -ForegroundColor Green
 
@@ -131,9 +155,9 @@ $concurrentArgs = @(
     "concurrently",
     "--names", "GO,NODE,VITE",
     "--prefix-colors", "cyan,green,magenta",
-    "cd vms-backend-service && go tool air",
-    "cd vms-ui-service && npm run dev",
-    "cd vms-ui-service/web-ui && npm run dev"
+    "cd services/vms-backend-service && go tool air",
+    "cd services/vms-dashboard-service && npm run dev",
+    "cd services/vms-dashboard-service/web-ui && npm run dev"
 )
 
 try {
@@ -143,8 +167,8 @@ try {
 finally {
     # this block is guaranteed to execute by the OS, even during a Ctrl+C force-abort
     Write-Host "`n[dev] cleaning up local development containers..." -ForegroundColor Yellow
-    docker stop rmq-dev db-dev | Out-Null
-    docker rm rmq-dev db-dev | Out-Null
+    docker stop rmq-dev db-dev opencv5-worker | Out-Null
+    docker rm rmq-dev db-dev opencv5-worker | Out-Null
     Write-Host "[dev] backend sandbox containers removed successfully." -ForegroundColor Green
 }
 

@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/time"
       version = "~> 0.11"
     }
+    minio = {
+      source  = "aminueza/minio"
+      version = "3.45.0"
+    }
   }
 }
 

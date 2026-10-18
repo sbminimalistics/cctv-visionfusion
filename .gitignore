@@ -32,4 +32,4 @@ config.yml
 **/dist
 
 *.exe
-vms-backend-service/vms-app
+services/vms-backend-service/vms-backend-app
