@@ -123,13 +123,15 @@ resource "docker_container" "vms_container" {
     "DB_PORT=${var.db_port}",
     "DB_NAME=${var.db_name}",
     "BACKEND_DB_USER=${var.backend_db_user}",
-    "BACKEND_DB_PASSWORD=${var.backend_db_pass}",
+    "BACKEND_DB_PASS=${var.backend_db_pass}",
     "BACKEND_DB_SCHEMA=${var.backend_db_schema}",
     "RMQ_HOST=${var.rmq_host}",
     "RMQ_PORT=${var.rmq_port}",
     "BACKEND_RMQ_USER=${var.backend_rmq_user}",
     "BACKEND_RMQ_PASS=${var.backend_rmq_pass}",
-    "RMQ_VHOST=${var.rmq_vhost}"
+    "RMQ_VHOST=${var.rmq_vhost}",
+    "RMQ_EXCHANGE_BACKEND_EVENTS=${var.rmq_exchange_backend_events}",
+    "RMQ_EXCHANGE_BACKEND_TRIGGERS=${var.rmq_exchange_backend_triggers}"
   ]
 
   depends_on = [

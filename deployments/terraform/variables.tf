@@ -135,6 +135,26 @@ variable "downloader_rmq_pass" {
   description = "Password for downloader service"
 }
 
+variable "rmq_exchange_backend_events" {
+  type        = string
+  default     = "devices.events.topic"
+}
+
+variable "rmq_exchange_backend_triggers" {
+  type        = string
+  default     = "processor.triggers.topic"
+}
+
+variable "rmq_queue_dashboard_feed" {
+  type        = string
+  default     = "dashboard_feed"
+}
+
+variable "rmq_queue_dashboard_triggers" {
+  type        = string
+  default     = "dashboard_triggers"
+}
+
 variable "admin_minio_pass" {
   type        = string
   sensitive   = true

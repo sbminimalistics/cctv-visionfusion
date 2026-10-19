@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package vms;
+
+import "google/protobuf/timestamp.proto";
+
+// Ensures Go generates files into their specific absolute module namespaces
+option go_package = "/events";
+
+message DeviceEvent {
+    string id = 1;
+    string name = 2;
+    google.protobuf.Timestamp event_time = 3;
+    bytes raw_xml_payload = 4;
+}
+
+message TriggerEvent {
+    string id = 1;
+    string device_id = 2;
+    google.protobuf.Timestamp event_time = 3;
+    string trigger_type = 4;
+}

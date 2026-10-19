@@ -7,7 +7,16 @@
   ],
   "exchanges": [
     {
-      "name": "vms.events",
+      "name": "devices.events.topic",
+      "vhost": "vms",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "processor.triggers.topic",
       "vhost": "vms",
       "type": "topic",
       "durable": true,
@@ -18,7 +27,29 @@
   ],
   "queues": [
     {
-      "name": "vms.alerts",
+      "name": "dashboard_feed",
+      "vhost": "vms",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 5000,
+        "x-overflow": "drop-head",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "dashboard_triggers",
+      "vhost": "vms",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 5000,
+        "x-overflow": "drop-head",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "image_refs",
       "vhost": "vms",
       "durable": true,
       "auto_delete": false,
@@ -31,11 +62,19 @@
   ],
   "bindings": [
     {
-      "source": "vms.events",
+      "source": "devices.events.topic",
       "vhost": "vms",
-      "destination": "vms.alerts",
+      "destination": "dashboard_feed",
       "destination_type": "queue",
-      "routing_key": "camera.#",
+      "routing_key": "#",
+      "arguments": {}
+    },
+    {
+      "source": "processor.triggers.topic",
+      "vhost": "vms",
+      "destination": "dashboard_triggers",
+      "destination_type": "queue",
+      "routing_key": "#",
       "arguments": {}
     }
   ]

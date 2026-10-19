@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 import sys
+import time
 
 from rabbitmq_amqp_python_client import Environment, AMQPMessagingHandler, AddressHelper
 
@@ -37,18 +38,14 @@ def main():
     rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
     rabbitmq_port = os.getenv('RABBITMQ_PORT', '5672')
     rabbitmq_vhost = os.getenv('RABBITMQ_VHOST', 'vms')
-    queue_name = os.getenv('RABBITMQ_QUEUE', 'image_queue')
+    queue_name = os.getenv('RABBITMQ_QUEUE', 'image_refs')
     rabbitmq_user = os.getenv('DOWNLOADER_RMQ_USER', 'a')
     rabbitmq_pass = os.getenv('DOWNLOADER_RMQ_PASS', 'b')
 
-    print(rabbitmq_host, flush=True)
-    print(rabbitmq_port, flush=True)
-    print(rabbitmq_vhost, flush=True)
-    print(queue_name, flush=True)
-    print(rabbitmq_user, flush=True)
-    print(rabbitmq_pass, flush=True)
-
     print(f"Starting OpenCV 5.0 worker via AMQP 1.0...", flush=True)
+
+    connection = None
+    env = None
 
     try:
         # Initialize the AMQP 1.0 Environment and open a connection
@@ -57,12 +54,28 @@ def main():
         connection = env.connection()
         connection.dial()
         
+        # Keep a reference to the consumer object if you need to close it explicitly
         consumer = connection.consumer(f"/queues/{queue_name}", message_handler=ImageMessageHandler())
-        print(f" [*] Listening on AMQP 1.0 Queue: '{queue_name}'...", flush=True)
+        print(f" [*] Listening on AMQP 1.0 Queue: '{queue_name}'... Press Ctrl+C to exit.", flush=True)
 
+        # Main worker retention block
+        while True:
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        print("Shutdown signal received (Ctrl+C). Cleaning up resources...", flush=True)
     except Exception as e:
-        print(f" [!] AMQP 1.1/1.0 Engine Error: {e}", flush=True)
+        print(f" [!] AMQP Engine Error: {e}", flush=True)
         sys.exit(1)
+    finally:
+        # Graceful connection context tear-down 
+        if connection:
+            try:
+                print(" [->] Closing AMQP connection...", flush=True)
+                connection.close()
+            except Exception:
+                pass
+        print(" [✓] Worker stopped cleanly.", flush=True)
 
 if __name__ == '__main__':
     main()

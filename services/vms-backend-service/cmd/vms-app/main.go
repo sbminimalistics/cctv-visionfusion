@@ -55,7 +55,7 @@ func main() {
 	broker.StartConsumer(ctx, &wg, func(ev event.CommsEvent) {
 		fmt.Printf(" [ALERT TRIGGERED] Camera %s reported event: %s\n", ev.CameraID, ev.EventType)
 		routingKey := strings.Join([]string{"camera.", ev.CameraID}, "")
-		rmqClient.Publish(ctx, "vms.events", routingKey, []byte("camera.event"))
+		rmqClient.Publish(ctx, config.Config.RabbitMQ.ExchangeEvents, routingKey, []byte("camera.event"))
 	})
 
 	for _, camConfig := range config.Config.Cameras {

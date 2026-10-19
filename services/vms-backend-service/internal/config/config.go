@@ -20,15 +20,17 @@ type DBConfig struct {
 	Port     port   `yaml:"port" env:"DB_PORT" env-default:"5432"`
 	Name     string `yaml:"name" env:"DB_NAME" env-default:"postgres"`
 	User     string `yaml:"user" env:"BACKEND_DB_USER" env-default:"user"`
-	Password string `yaml:"password" env:"BACKEND_DB_PASSWORD"`
+	Password string `yaml:"password" env:"BACKEND_DB_PASS"`
 }
 
 type RabbitMQConfig struct {
-	Host     string `yaml:"host" env:"RMQ_HOST" env-default:"localhost"`
-	Port     port   `yaml:"port" env:"RMQ_PORT" env-default:"5672"`
-	User     string `yaml:"user" env:"BACKEND_RMQ_USER" env-default:"backend_worker"`
-	Password string `yaml:"password" env:"BACKEND_RMQ_PASS"`
-	VHost    string `yaml:"vhost" env:"RMQ_VHOST" env-default:"/vms"`
+	Host             string `yaml:"host" env:"RMQ_HOST" env-default:"localhost"`
+	Port             port   `yaml:"port" env:"RMQ_PORT" env-default:"5672"`
+	User             string `yaml:"user" env:"BACKEND_RMQ_USER" env-default:"backend_worker"`
+	Password         string `yaml:"password" env:"BACKEND_RMQ_PASS"`
+	VHost            string `yaml:"vhost" env:"RMQ_VHOST" env-default:"/vms"`
+	ExchangeEvents   string `yaml:"exchange_events" env:"RMQ_EXCHANGE_BACKEND_EVENTS"`
+	ExchangeTriggers string `yaml:"exchange_triggers" env:"RMQ_EXCHANGE_BACKEND_TRIGGERS"`
 }
 
 type AppConfig struct {

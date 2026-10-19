@@ -54,10 +54,10 @@ docker run -d --name rmq-dev `
 $dbName = if (${env:DB_NAME}) { $env:DB_NAME } else {"vms_database"}
 $dbPort = if (${env:DB_PORT}) { $env:DB_PORT } else {"5432"}
 $backendUser = $env:BACKEND_DB_USER
-$backendPass = $env:BACKEND_DB_PASSWORD
+$backendPass = $env:BACKEND_DB_PASS
 $backendSchema = $env:BACKEND_DB_SCHEMA
 $dashboardUser = $env:DASHBOARD_DB_USER
-$dashboardPass = $env:DASHBOARD_DB_PASSWORD
+$dashboardPass = $env:DASHBOARD_DB_PASS
 $dashboardSchema = $env:DASHBOARD_DB_SCHEMA
 
 $initSqlPath = "${PSScriptRoot}/init-multi-user.sql"
@@ -132,32 +132,33 @@ Write-Host "[dev] infrastructure provisioning complete. ports are stable." -Fore
 Write-Host "[dev] waiting 2 seconds for communication ports to stabilize..." -ForegroundColor Yellow
 Start-Sleep -Seconds 2
 
-Write-Host "[dev] building python image..." -ForegroundColor Blue
-docker build -t opencv5-image "${PSScriptRoot}/../services/vms-cv-service"
+# Write-Host "[dev] building python image..." -ForegroundColor Blue
+# docker build -t opencv5-image "${PSScriptRoot}/../services/vms-cv-service"
 
-Write-Host "[dev] spinning up python container..." -ForegroundColor Blue
-docker run --name opencv5-worker `
---add-host=host.docker.internal:host-gateway `
-  --network dev-network `
-  -e RABBITMQ_HOST=${env:RMQ_HOST} `
-  -e RABBITMQ_PORT=${env:RMQ_PORT} `
-  -e RABBITMQ_VHOST=${env:RMQ_VHOST} `
-  -e RABBITMQ_QUEUE=vms.alerts `
-  -e DOWNLOADER_RMQ_USER=${env:DOWNLOADER_RMQ_USER} `
-  -e DOWNLOADER_RMQ_PASS=${env:DOWNLOADER_RMQ_PASS} `
-  -d `
-  opencv5-image | Out-Null
+# Write-Host "[dev] spinning up python container..." -ForegroundColor Blue
+# docker run --name opencv5-worker `
+# --add-host=host.docker.internal:host-gateway `
+#   --network dev-network `
+#   -e RABBITMQ_HOST=${env:RMQ_HOST} `
+#   -e RABBITMQ_PORT=${env:RMQ_PORT} `
+#   -e RABBITMQ_VHOST=${env:RMQ_VHOST} `
+#   -e RABBITMQ_QUEUE=${env:} `
+#   -e DOWNLOADER_RMQ_USER=${env:DOWNLOADER_RMQ_USER} `
+#   -e DOWNLOADER_RMQ_PASS=${env:DOWNLOADER_RMQ_PASS} `
+#   -d `
+#   opencv5-image | Out-Null
 
 Write-Host "[dev] launching workspace components natively..." -ForegroundColor Green
 
 # set execution configurations
 $concurrentArgs = @(
     "concurrently",
-    "--names", "GO,NODE,VITE",
+    "--names", "BE,DASH,VITE,CV",
     "--prefix-colors", "cyan,green,magenta",
     "cd services/vms-backend-service && go tool air",
     "cd services/vms-dashboard-service && npm run dev",
-    "cd services/vms-dashboard-service/web-ui && npm run dev"
+    "cd services/vms-dashboard-service/web-ui && npm run dev",
+    "cd services/vms-cv-service/ && watchmedo auto-restart --directory=. --pattern=*.py --recursive -- python main.py"
 )
 
 try {
@@ -167,8 +168,8 @@ try {
 finally {
     # this block is guaranteed to execute by the OS, even during a Ctrl+C force-abort
     Write-Host "`n[dev] cleaning up local development containers..." -ForegroundColor Yellow
-    docker stop rmq-dev db-dev opencv5-worker | Out-Null
-    docker rm rmq-dev db-dev opencv5-worker | Out-Null
+    docker stop rmq-dev db-dev | Out-Null
+    docker rm rmq-dev db-dev | Out-Null
     Write-Host "[dev] backend sandbox containers removed successfully." -ForegroundColor Green
 }
 

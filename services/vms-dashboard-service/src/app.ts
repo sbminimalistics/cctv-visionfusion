@@ -1,14 +1,16 @@
 import * as dotenv from "dotenv";
 import * as path from "path";
 import rmq from "./messaging/rmq.ts";
+import db from "./db/database.ts";
 
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 
 const RMQ_HOST = process.env.RMQ_HOST || "localhost";
 const RMQ_PORT = process.env.RMQ_PORT || "5672";
-const RMQ_USER = process.env.DASHBOARD_RMQ_USER || "consumer_worker";
+const RMQ_USER = process.env.DASHBOARD_RMQ_USER || "dashboard_worker";
 const RMQ_PASS = process.env.DASHBOARD_RMQ_PASS;
-const RMQ_VHOST = process.env.RMQ_VHOST || "/vms";
+const RMQ_VHOST = process.env.RMQ_VHOST || "vms";
+const RMQ_QUEUE_DASHBOARD_FEED = process.env.RMQ_QUEUE_DASHBOARD_FEED || "dashboard_feed";
 
 async function bootstrap() {
     if (!RMQ_PASS) {
@@ -31,79 +33,10 @@ async function bootstrap() {
         password: RMQ_PASS,
         vhost: RMQ_VHOST,
     };
-    consumer.connect(opts, "vms.alerts");
+    consumer.connect(opts, RMQ_QUEUE_DASHBOARD_FEED);
+
+    const res = await db`select version();`;
+    console.log("db version:", res);
 }
-
-/* async function connectMessanger(url: string) {
-    try {
-        const connection = await amqp.connect(url);
-        const channel = await connection.createChannel();
-        console.log("Connected successfully to RabbitMQ Broker!");
-
-        process.once("SIGINT", async () => {
-            console.log("Closing consumer channels safely...");
-            await channel.close();
-            await connection.close();
-            process.exit(0);
-        });
-
-        await channel.assertExchange(EXCHANGE_NAME, "topic", { durable: true });
-
-        await channel.assertQueue(QUEUE_NAME, {
-            durable: true,
-            arguments: {
-                "x-max-length": 5000,
-                "x-overflow": "drop-head",
-                "x-message-ttl": 86400000,
-            },
-        });
-
-        await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY);
-        console.log(
-            `Subscribed to queue: [${QUEUE_NAME}]. Awaiting stream notifications...`,
-        );
-
-        await channel.consume(
-            QUEUE_NAME,
-            (message) => {
-                if (!message) {
-                    console.warn("Consumer cancelled by server interface.");
-                    return;
-                }
-
-                try {
-                    const payloadString = message.content.toString();
-                    const routingInfo = message.fields.routingKey;
-
-                    console.log(
-                        `\n[NEW ALERT] Intercepted on Routing Key: ${routingInfo}`,
-                    );
-                    console.log(`Payload Data: ${payloadString}`);
-
-                    channel.ack(message);
-                    console.log(
-                        "Message successfully processed and Acknowledged (ACK).",
-                    );
-                } catch (processingError) {
-                    console.error(
-                        "Error parsing message content:",
-                        processingError,
-                    );
-                    channel.nack(message, false, true);
-                }
-            },
-            {
-                noAck: false,
-            },
-        );
-    } catch (connectionError) {
-        console.error(
-            "Failed to establish communication with RabbitMQ engine:",
-            (connectionError as Error).message,
-        );
-        console.log("retrying in 5s ...");
-        setTimeout(connectMessanger, 5000);
-    }
-} */
 
 bootstrap();

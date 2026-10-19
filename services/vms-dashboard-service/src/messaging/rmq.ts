@@ -4,7 +4,7 @@ export default class RMQClient {
     queue: string = "";
     connectionOptions: amqp.Options.Connect;
 
-    EXCHANGE_NAME = "vms.events";
+    EXCHANGE_NAME = "events";
 
     constructor() {
         this.connectionOptions = {};
