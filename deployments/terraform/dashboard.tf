@@ -3,7 +3,7 @@ resource "docker_image" "vms_dashboard" {
   name = "vms-dashboard:latest"
 
   build {
-    context    = "../../services/vms-dashboard-service"
+    context    = "../../services/dashboard"
     dockerfile = "Dockerfile"
   }
 

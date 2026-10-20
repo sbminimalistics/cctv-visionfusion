@@ -9,11 +9,11 @@ Set-Location -Path $projectRootDir
 Write-Host "[dev] workspace root aligned to: $projectRootDir" -ForegroundColor Gray
 
 # Create the output directory folders if they do not exist yet
-if (-not (Test-Path -Path "services/vms-backend-service/proto")) {
-    New-Item -ItemType Directory -Path "services/vms-backend-service/proto"
+if (-not (Test-Path -Path "services/backend/proto")) {
+    New-Item -ItemType Directory -Path "services/backend/proto"
 }
-if (-not (Test-Path -Path "services/vms-dashboard-service/proto")) {
-    New-Item -ItemType Directory -Path "services/vms-dashboard-service/proto"
+if (-not (Test-Path -Path "services/dashboard/proto")) {
+    New-Item -ItemType Directory -Path "services/dashboard/proto"
 }
 
 $IncludeCacheDir = Join-Path WorkspaceRoot ".proto_include\google\protobuf"
@@ -27,8 +27,8 @@ if (-not (Test-Path -Path \$IncludeCacheDir)) {
 # Execute unified compilation
 protoc `
 --proto_path=proto `
---go_out=services/vms-backend-service/proto `
---plugin=protoc-gen-ts_proto="${projectRootDirForward}/services/vms-dashboard-service/node_modules/.bin/protoc-gen-ts_proto.cmd" `
---ts_proto_out="${projectRootDirForward}/services/vms-dashboard-service/proto" `
+--go_out=services/backend/proto `
+--plugin=protoc-gen-ts_proto="${projectRootDirForward}/services/dashboard/node_modules/.bin/protoc-gen-ts_proto.cmd" `
+--ts_proto_out="${projectRootDirForward}/services/dashboard/proto" `
 --ts_proto_opt=env=node,esModuleInterop=true `
 proto/events.proto

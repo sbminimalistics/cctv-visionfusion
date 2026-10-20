@@ -3,11 +3,11 @@ resource "null_resource" "go_build" {
   triggers = {
     always_run = "${timestamp()}"
     # rebuild only if actual Go source files or configurations change
-    dir_sha1 = sha1(join("", [for f in fileset("../../services/vms-backend-service", "**/*.go") : filesha1("../../services/vms-backend-service/${f}")]))
+    dir_sha1 = sha1(join("", [for f in fileset("../../services/backend", "**/*.go") : filesha1("../../services/backend/${f}")]))
   }
 
   provisioner "local-exec" {
-    command = "cd ../../services/vms-backend-service && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0&& go build -o vms-backend-app ./cmd/vms-app/main.go"
+    command = "cd ../../services/backend && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0&& go build -o vms-backend-app ./cmd/vms-app/main.go"
   }
 }
 
@@ -39,7 +39,7 @@ resource "terraform_data" "remote_docker_build" {
       host        = var.remote_ubuntu_ip
       private_key = file(var.ssh_key_path)
     }
-    source      = "../../services/vms-backend-service/vms-backend-app"
+    source      = "../../services/backend/vms-backend-app"
     destination = "/tmp/vms-build/vms-backend-app"
   }
 
@@ -50,7 +50,7 @@ resource "terraform_data" "remote_docker_build" {
       host        = var.remote_ubuntu_ip
       private_key = file(var.ssh_key_path)
     }
-    source      = "../../services/vms-backend-service/config.yml"
+    source      = "../../services/backend/config.yml"
     destination = "/tmp/vms-build/config.yml"
   }
 
@@ -61,7 +61,7 @@ resource "terraform_data" "remote_docker_build" {
       host        = var.remote_ubuntu_ip
       private_key = file(var.ssh_key_path)
     }
-    source      = "../../services/vms-backend-service/Dockerfile"
+    source      = "../../services/backend/Dockerfile"
     destination = "/tmp/vms-build/Dockerfile"
   }
 

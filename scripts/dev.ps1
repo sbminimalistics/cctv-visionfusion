@@ -133,7 +133,7 @@ Write-Host "[dev] waiting 2 seconds for communication ports to stabilize..." -Fo
 Start-Sleep -Seconds 2
 
 # Write-Host "[dev] building python image..." -ForegroundColor Blue
-# docker build -t opencv5-image "${PSScriptRoot}/../services/vms-cv-service"
+# docker build -t opencv5-image "${PSScriptRoot}/../services/cv"
 
 # Write-Host "[dev] spinning up python container..." -ForegroundColor Blue
 # docker run --name opencv5-worker `
@@ -155,10 +155,10 @@ $concurrentArgs = @(
     "concurrently",
     "--names", "BE,DASH,VITE,CV",
     "--prefix-colors", "cyan,green,magenta",
-    "cd services/vms-backend-service && go tool air",
-    "cd services/vms-dashboard-service && npm run dev",
-    "cd services/vms-dashboard-service/web-ui && npm run dev",
-    "cd services/vms-cv-service/ && watchmedo auto-restart --directory=. --pattern=*.py --recursive -- python main.py"
+    "cd services/backend && go tool air",
+    "cd services/dashboard && npm run dev",
+    "cd services/dashboard/web-ui && npm run dev",
+    "cd services/cv/ && watchmedo auto-restart --directory=. --pattern=*.py --recursive -- python main.py"
 )
 
 try {

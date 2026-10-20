@@ -1,5 +1,5 @@
 {
-    "name": "vms-dashboard-service",
+    "name": "dashboard",
     "version": "1.0.0",
     "description": "",
     "main": "app.ts",
