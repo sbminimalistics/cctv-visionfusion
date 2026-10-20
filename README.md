@@ -5,7 +5,7 @@ CCTV VisionFusion is an event-driven security platform that combines inputs from
 ## Prerequisites
 
 ### System Requirements (Production Host)
-* **Operating System:** Ubuntu 24.04
+* **Operating System:** Ubuntu 24.04+
 * **Container Runtime:** Docker Engine (Standalone)
 * **User Identity:** Non-root user with a fixed UID (e.g., UID 1000) for secure volume bind-mounting
 
