@@ -7,7 +7,7 @@ resource "null_resource" "go_build" {
   }
 
   provisioner "local-exec" {
-    command = "cd ../../services/backend && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0&& go build -o vms-backend-app ./cmd/vms-app/main.go"
+    command = "cd ../../services/backend && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0&& go build -o cctv-visionfusion-backend-app ./cmd/app/main.go"
   }
 }
 
@@ -28,7 +28,7 @@ resource "terraform_data" "remote_docker_build" {
     }
 
     inline = [
-      "mkdir -p /tmp/vms-build"
+      "mkdir -p /tmp/build"
     ]
   }
 
@@ -39,8 +39,8 @@ resource "terraform_data" "remote_docker_build" {
       host        = var.remote_ubuntu_ip
       private_key = file(var.ssh_key_path)
     }
-    source      = "../../services/backend/vms-backend-app"
-    destination = "/tmp/vms-build/vms-backend-app"
+    source      = "../../services/backend/cctv-visionfusion-backend-app"
+    destination = "/tmp/build/cctv-visionfusion-backend-app"
   }
 
   provisioner "file" {
@@ -51,7 +51,7 @@ resource "terraform_data" "remote_docker_build" {
       private_key = file(var.ssh_key_path)
     }
     source      = "../../services/backend/config.yml"
-    destination = "/tmp/vms-build/config.yml"
+    destination = "/tmp/build/config.yml"
   }
 
   provisioner "file" {
@@ -62,7 +62,7 @@ resource "terraform_data" "remote_docker_build" {
       private_key = file(var.ssh_key_path)
     }
     source      = "../../services/backend/Dockerfile"
-    destination = "/tmp/vms-build/Dockerfile"
+    destination = "/tmp/build/Dockerfile"
   }
 
   provisioner "remote-exec" {
@@ -73,9 +73,9 @@ resource "terraform_data" "remote_docker_build" {
       private_key = file(var.ssh_key_path)
     }
     inline = [
-      "cd /tmp/vms-build",
-      "docker build -t vms-backend-app:latest .",
-      "rm -rf /tmp/vms-build"
+      "cd /tmp/build",
+      "docker build -t cctv-visionfusion-backend-app:latest .",
+      "rm -rf /tmp/build"
     ]
   }
 }
@@ -99,14 +99,14 @@ resource "terraform_data" "remote_docker_cleanup" {
     }
 
     inline = [
-      "docker rmi vms-backend-app:latest || true"
+      "docker rmi cctv-visionfusion-backend-app:latest || true"
     ]
   }
 }
 
 resource "docker_container" "vms_container" {
-  name    = "vms-backend"
-  image   = "vms-backend-app:latest"
+  name    = "cctv-visionfusion-backend"
+  image   = "cctv-visionfusion-backend-app:latest"
   restart = "unless-stopped"
 
   ports {
@@ -115,7 +115,7 @@ resource "docker_container" "vms_container" {
   }
 
   networks_advanced {
-    name = docker_network.vms_net.name
+    name = docker_network.cctv_vf_net.name
   }
 
   env = [
@@ -135,6 +135,7 @@ resource "docker_container" "vms_container" {
   ]
 
   depends_on = [
+    docker_network.cctv_vf_net,
     terraform_data.remote_docker_build,
     terraform_data.remote_docker_cleanup,
     terraform_data.rabbitmq_policy_provisioning

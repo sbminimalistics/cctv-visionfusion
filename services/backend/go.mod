@@ -3,6 +3,14 @@ module sbminimalistics.com/vms
 go 1.26.2
 
 require (
+	github.com/ilyakaznacheev/cleanenv v1.5.0
+	github.com/rabbitmq/amqp091-go v1.15.0
+	google.golang.org/protobuf v1.36.11
+	gorm.io/driver/postgres v1.6.3
+	gorm.io/gorm v1.31.2
+)
+
+require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/air-verse/air v1.67.4 // indirect
@@ -16,7 +24,6 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gohugoio/hashstructure v0.6.0 // indirect
 	github.com/gohugoio/hugo v0.164.0 // indirect
-	github.com/ilyakaznacheev/cleanenv v1.5.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgx/v5 v5.11.0 // indirect
@@ -28,17 +35,13 @@ require (
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
-	github.com/rabbitmq/amqp091-go v1.15.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/tdewolff/parse/v2 v2.8.12 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.6.3 // indirect
-	gorm.io/gorm v1.31.2 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
 

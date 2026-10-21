@@ -32,4 +32,4 @@ config.yml
 **/dist
 
 *.exe
-services/backend/vms-backend-app
+services/backend/cctv-visionfusion-backend

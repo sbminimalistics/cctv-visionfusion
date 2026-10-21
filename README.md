@@ -23,8 +23,10 @@ To compile the Protocol Buffer schemas or run services locally, you require:
 
 ## Installation
 
+installation of dependencies is only meant for development purpose
+
 ```powershell
-PS C:\cctv-visionfusion> powershell scripts/install.ps1
+PS C:\cctv-visionfusion> powershell scripts/install-dev.ps1
 ```
 
 ## Protobuf schemas generation

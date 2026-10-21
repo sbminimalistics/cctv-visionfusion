@@ -1,6 +1,6 @@
 # node.js ui image build
 resource "docker_image" "vms_dashboard" {
-  name = "vms-dashboard:latest"
+  name = "cctv-visionfusion-dashboard:latest"
 
   build {
     context    = "../../services/dashboard"
@@ -10,9 +10,9 @@ resource "docker_image" "vms_dashboard" {
   keep_locally = true
 }
 
-# node.js container (vms-dashboard)
+# node.js container (cctv-visionfusion-dashboard)
 resource "docker_container" "vms_ui_container" {
-  name    = "vms-dashboard"
+  name    = "cctv-visionfusion-dashboard"
   image   = docker_image.vms_dashboard.image_id 
   restart = "unless-stopped"
 
@@ -22,7 +22,7 @@ resource "docker_container" "vms_ui_container" {
   }
 
   networks_advanced {
-    name = docker_network.vms_net.name
+    name = docker_network.cctv_vf_net.name
   }
 
   env = [
@@ -43,6 +43,7 @@ resource "docker_container" "vms_ui_container" {
   ]
 
   depends_on = [
+    docker_network.cctv_vf_net,
     terraform_data.rabbitmq_policy_provisioning
   ]
 }

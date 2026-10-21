@@ -9,7 +9,7 @@ tmp_dir = "tmp"
   args_bin = []
   # Using plain "tmp/main" allows Go's toolchain to translate paths automatically
   bin = "tmp/main"
-  cmd = "go build -o tmp/main cmd/vms-app/main.go"
+  cmd = "go build -o tmp/main cmd/app/main.go"
   delay = 1000
   entrypoint = ["tmp/main"]
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
@@ -37,7 +37,7 @@ tmp_dir = "tmp"
   [build.windows]
     args_bin = []
     bin = ".\\tmp\\main.exe"
-    cmd = "go build -o .\\tmp\\main.exe .\\cmd\\vms-app\\main.go"
+    cmd = "go build -o .\\tmp\\main.exe .\\cmd\\app\\main.go"
     entrypoint = [".\\tmp\\main.exe"]
     full_bin = ".\\tmp\\main.exe"
     post_cmd = []

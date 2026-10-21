@@ -26,7 +26,7 @@ resource "docker_container" "rabbitmq" {
   ]
 
   networks_advanced {
-    name = docker_network.vms_net.name
+    name = docker_network.cctv_vf_net.name
   }
 
   healthcheck {
@@ -36,6 +36,8 @@ resource "docker_container" "rabbitmq" {
     retries      = 10
     start_period = "5s"
   }
+
+  depends_on = [docker_network.cctv_vf_net]
 }
 
 resource "terraform_data" "rabbitmq_health_gate" {

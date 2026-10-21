@@ -1,9 +1,9 @@
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates tzdata
 WORKDIR /root/
-COPY vms-backend-app .
+COPY cctv-visionfusion-backend-app .
 COPY config.yml .
 
-RUN chmod +x ./vms-backend-app
+RUN chmod +x ./cctv-visionfusion-backend-app
 
-CMD ["./vms-backend-app"]
+CMD ["./cctv-visionfusion-backend-app"]
