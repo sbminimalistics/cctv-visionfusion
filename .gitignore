@@ -26,7 +26,7 @@ config.yml
 
 **/tmp/
 
-.env*
+.env_dev
 
 **/node_modules
 **/dist
