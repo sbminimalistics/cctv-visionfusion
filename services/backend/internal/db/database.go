@@ -16,13 +16,11 @@ type DBWrapper struct {
 
 // Connect initializes and returns the GORM database engine
 func Connect(host string, port int, user, password, dbname string) (*DBWrapper, error) {
-	// Construct connection string matching your Postgres platform matrix
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=UTC",
 		host, user, password, dbname, port)
 
 	fmt.Println("connecting to postgres via GORM")
 
-	// Open GORM connection with default configuration and basic info logs
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})

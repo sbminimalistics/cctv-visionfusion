@@ -37,11 +37,9 @@ PS C:\cctv-visionfusion> powershell scripts/proto.ps1
 
 ## Development
 
-before you start development script: install dependencies for sub-projects
+before starting development script:
 
-```powershell
-PS C:\cctv-visionfusion> powershell scripts/install-dev.ps1
-```
+create .env_dev in the root folder based on .env_dev.example
 
 start dev setup
 

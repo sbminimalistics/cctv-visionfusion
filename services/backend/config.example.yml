@@ -1,14 +1,33 @@
 cameras:
-    - name: "camera-location-or-id"
-      ip: "0.0.0.0"
+    - id: "unique-device-id"
+      host: "0.0.0.0"
       port: 80
       user: "api_user_placeholder"
       password: "secure_password_placeholder"
+      manufacturer: "hikvision"
+      device_type: "camera"
+
+event_compositions:
+    - id: "composition_000"
+      default_event_retention_ms: 1000
+      sources:
+          - device_id: "unique-device-id"
+            event_type: "VMD"
+
+routing:
+    - source:
+          source_id: "unique-device-id"
+          event_type_regexp: "*"
+      destination_exchange: "exchange_topic"
+    - source:
+          source_id: "composition_000"
+          event_type_regexp: "*"
+      destination_exchange: "exchange_topic"
 
 database:
     host: "localhost"
     port: 5432
-    name: "vms_production"
+    name: "cctv-vf_production"
     user: "db_user_placeholder"
     password: "" # inject via DB_PASSWORD environment variable
 
@@ -17,4 +36,4 @@ rabbitmq:
     port: 5672
     user: "producer_worker"
     password: "" # inject via RMQ_PASS environment variable
-    vhost: "/vms"
+    vhost: "/cctv-vf"

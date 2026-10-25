@@ -1,11 +1,11 @@
-module sbminimalistics.com/vms
+module sbminimalistics.com/cctv-visionfusion
 
 go 1.26.2
 
 require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/rabbitmq/amqp091-go v1.15.0
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12
 	gorm.io/driver/postgres v1.6.3
 	gorm.io/gorm v1.31.2
 )

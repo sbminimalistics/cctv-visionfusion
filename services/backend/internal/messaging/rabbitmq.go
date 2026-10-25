@@ -11,7 +11,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// RMQClient handles your RabbitMQ connection and channel pool lifecycles safely
 type RMQClient struct {
 	url      string
 	conn     *amqp.Connection
@@ -71,7 +70,7 @@ func (r *RMQClient) handleDisconnect() {
 		}
 		r.mu.Unlock()
 
-		// Backoff reconnection loop until the broker is recovered
+		// backoff reconnection loop until the broker is recovered
 		for {
 			time.Sleep(3 * time.Second)
 			log.Println("[RMQ] Attempting to reconnect to broker box...")
@@ -92,7 +91,6 @@ func (r *RMQClient) Publish(ctx context.Context, exchangeName, routingKey string
 		return fmt.Errorf("cannot publish message: rabbitmq client is disconnected")
 	}
 
-	// Dispatch message targeting standard AMQP 0-9-1 configurations
 	err := r.ch.PublishWithContext(ctx,
 		exchangeName, // Exchange name string
 		routingKey,   // Target queue routing identifier

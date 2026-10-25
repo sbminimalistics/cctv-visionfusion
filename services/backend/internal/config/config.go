@@ -2,17 +2,44 @@ package config
 
 import (
 	"fmt"
-	"strconv"
+	"regexp"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-type CameraConfig struct {
-	Name     string `yaml:"name"`
-	IP       string `yaml:"ip"`
-	Port     port   `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
+type DeviceType string
+
+const (
+	Camera DeviceType = "camera"
+	NVR    DeviceType = "nvr"
+)
+
+type Manufacturer string
+
+const (
+	Hikvision Manufacturer = "hikvision"
+)
+
+type EdgeDeviceConfig struct {
+	Id                  string       `yaml:"id"`
+	Host                string       `yaml:"host"`
+	Port                port         `yaml:"port"`
+	User                string       `yaml:"user"`
+	Password            string       `yaml:"password"`
+	Manufacturer        Manufacturer `yaml:"manufacturer"`
+	DeviceType          DeviceType   `yaml:"device_type"`
+	DestinationExchange string       `yaml:"destination_exchange"`
+}
+
+type CompositionSourceConfig struct {
+	DeviceID  string `yaml:"device_id"`
+	EventType string `yaml:"event_type"`
+}
+
+type EventCompositionConfig struct {
+	Id                      string                    `yaml:"id"`
+	DefaultEventRetentionMS int32                     `yaml:"default_event_retention_ms"`
+	Sources                 []CompositionSourceConfig `yaml:"sources"`
 }
 
 type DBConfig struct {
@@ -24,37 +51,53 @@ type DBConfig struct {
 }
 
 type RabbitMQConfig struct {
-	Host             string `yaml:"host" env:"RMQ_HOST" env-default:"localhost"`
-	Port             port   `yaml:"port" env:"RMQ_PORT" env-default:"5672"`
-	User             string `yaml:"user" env:"BACKEND_RMQ_USER" env-default:"backend_worker"`
-	Password         string `yaml:"password" env:"BACKEND_RMQ_PASS"`
-	VHost            string `yaml:"vhost" env:"RMQ_VHOST" env-default:"/vms"`
-	ExchangeEvents   string `yaml:"exchange_events" env:"RMQ_EXCHANGE_BACKEND_EVENTS"`
-	ExchangeTriggers string `yaml:"exchange_triggers" env:"RMQ_EXCHANGE_BACKEND_TRIGGERS"`
+	Host     string `yaml:"host" env:"RMQ_HOST" env-default:"localhost"`
+	Port     port   `yaml:"port" env:"RMQ_PORT" env-default:"5672"`
+	User     string `yaml:"user" env:"BACKEND_RMQ_USER" env-default:"backend_worker"`
+	Password string `yaml:"password" env:"BACKEND_RMQ_PASS"`
+	VHost    string `yaml:"vhost" env:"RMQ_VHOST" env-default:"/cctv-vf"`
 }
 
-type AppConfig struct {
-	Cameras  []CameraConfig `yaml:"cameras"`
-	DB       DBConfig       `yaml:"database"`
-	RabbitMQ RabbitMQConfig `yaml:"rabbitmq"`
+type RouteSourceEventRegexp struct {
+	*regexp.Regexp
+}
+
+func (r *RouteSourceEventRegexp) UnmarshalText(text []byte) error {
+	re, err := regexp.Compile(string(text))
+	if err != nil {
+		return fmt.Errorf("invalid regular expression in yaml: %w", err)
+	}
+	r.Regexp = re
+	return nil
+}
+
+func (r *RouteSourceEventRegexp) SetValue(s string) error {
+	re, err := regexp.Compile(s)
+	if err != nil {
+		return fmt.Errorf("invalid regular expression in env: %w", err)
+	}
+	r.Regexp = re
+	return nil
+}
+
+type RouteSource struct {
+	SourceID        string                  `yaml:"source_id"`
+	EventTypeRegexp *RouteSourceEventRegexp `yaml:"event_type_regexp"`
+}
+
+type Route struct {
+	Source              RouteSource `yaml:"source"`
+	DestinationExchange string      `yaml:"destination_exchange"`
 }
 
 type port int
 
-func (r *port) SetValue(s string) error {
-	if s == "" {
-		return fmt.Errorf("field value can't be empty")
-	}
-
-	p, err := strconv.Atoi(s)
-
-	if err != nil {
-		return fmt.Errorf("provided port value can not be parsed as integer")
-	}
-
-	*r = port(p)
-
-	return nil
+type AppConfig struct {
+	EdgeDevices       []EdgeDeviceConfig       `yaml:"edge_devices"`
+	EventCompositions []EventCompositionConfig `yaml:"event_compositions"`
+	Routing           []Route                  `yaml:"routing"`
+	DB                DBConfig                 `yaml:"database"`
+	RabbitMQ          RabbitMQConfig           `yaml:"rabbitmq"`
 }
 
 var Config AppConfig
@@ -70,7 +113,7 @@ func init() {
 	_ = cleanenv.ReadConfig(".env", &config)
 
 	// This forces cleanenv to re-parse the active environment memory strings
-	// and lock down the final production/dev overrides into your structure.
+	// and lock down the final production/dev overrides into the final structure.
 	err = cleanenv.ReadEnv(&config)
 	if err != nil {
 		fmt.Println("Environment variable sync error:", err)

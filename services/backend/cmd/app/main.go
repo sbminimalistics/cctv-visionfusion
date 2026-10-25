@@ -5,23 +5,22 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 
-	"sbminimalistics.com/vms/internal/cam"
-	"sbminimalistics.com/vms/internal/config"
-	"sbminimalistics.com/vms/internal/db"
-	"sbminimalistics.com/vms/internal/event"
-	"sbminimalistics.com/vms/internal/messaging"
+	"sbminimalistics.com/cctv-visionfusion/internal/bootstrap"
+	"sbminimalistics.com/cctv-visionfusion/internal/config"
+	"sbminimalistics.com/cctv-visionfusion/internal/db"
+	"sbminimalistics.com/cctv-visionfusion/internal/messaging"
 )
 
 func main() {
-	fmt.Println("starting vms...")
+	fmt.Println("starting CCTV VisionFusion ...")
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	// initialize db
 	_, err := db.Connect(
 		config.Config.DB.Host,
 		int(config.Config.DB.Port),
@@ -34,6 +33,7 @@ func main() {
 		fmt.Println("db connection error:,", err)
 	}
 
+	// initialize RabbitMQ client
 	rmqClient := messaging.NewRMQClient(
 		config.Config.RabbitMQ.User,
 		config.Config.RabbitMQ.Password,
@@ -50,35 +50,13 @@ func main() {
 	fmt.Println("RabbitMQ transport connection pipeline live.")
 
 	var wg sync.WaitGroup
-	broker := event.NewBroker(100)
 
-	broker.StartConsumer(ctx, &wg, func(ev event.CommsEvent) {
-		fmt.Printf(" [ALERT TRIGGERED] Camera %s reported event: %s\n", ev.CameraID, ev.EventType)
-		routingKey := strings.Join([]string{"camera.", ev.CameraID}, "")
-		rmqClient.Publish(ctx, config.Config.RabbitMQ.ExchangeEvents, routingKey, []byte("camera.event"))
-	})
+	// wire device event controller
+	_ = bootstrap.WireEdgeDeviceEventController(ctx, &wg, rmqClient)
 
-	for _, camConfig := range config.Config.Cameras {
+	<-ctx.Done()
+	fmt.Println("Shutdown initiated. Waiting for edge streams to exit...")
 
-		cameraStream := cam.NewStreamInstance(camConfig)
-
-		wg.Add(1)
-		go func(c *cam.EventNotificationAlert, cfg config.CameraConfig) {
-			defer wg.Done()
-
-			fmt.Printf(" [INIT] Starting connection routine for %s...\n", cfg.Name)
-
-			broker.OrchestrateStream(ctx, &wg, c)
-
-			c.ConnectAndRetryForever(ctx, camConfig)
-
-		}(cameraStream, camConfig)
-	}
-
-	// alertChan := make(chan event.CommsEvent, 100)
-
-	// var cam08 cam.EventNotificationAlert
-	// go cam08.Connect(config.Cfg.Cameras[1], alertChan)
-
-	select {}
+	wg.Wait()
+	fmt.Println("All edge devices disconnected. Closing infrastructure...")
 }
