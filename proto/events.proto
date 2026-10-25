@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package vms;
+package cctv_vf;
 
 import "google/protobuf/timestamp.proto";
 
@@ -8,15 +8,20 @@ import "google/protobuf/timestamp.proto";
 option go_package = "/events";
 
 message DeviceEvent {
-    string id = 1;
-    string name = 2;
-    google.protobuf.Timestamp event_time = 3;
-    bytes raw_xml_payload = 4;
+    string device_id = 1;
+    google.protobuf.Timestamp event_time = 2;
+    string manufacturer = 3;
+    string event_type = 4;
+    bytes raw_payload = 5;
 }
 
-message TriggerEvent {
+message CompositionEvent {
     string id = 1;
-    string device_id = 2;
+    repeated CompositionSource sources = 2;
     google.protobuf.Timestamp event_time = 3;
-    string trigger_type = 4;
+}
+
+message CompositionSource {
+    string device_id = 1;
+    string event_type = 2;
 }
