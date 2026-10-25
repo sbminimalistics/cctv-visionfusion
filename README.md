@@ -31,7 +31,7 @@ PS C:\cctv-visionfusion> powershell scripts/install-dev.ps1
 
 ## Device configuration
 
-Device, event composition and RabbitMQ routing configurations should be set in [link](services/backend/) 'config.yml' file based on structure provided in [link](services/backend/config.example.yml)
+Device, event composition and RabbitMQ routing configurations should be set in [services/backend/](services/backend/)config.yml file based on structure provided in [config.example.yml](services/backend/config.example.yml)
 
 ## Protobuf schemas generation
 
