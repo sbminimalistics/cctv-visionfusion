@@ -104,7 +104,7 @@ resource "terraform_data" "remote_docker_cleanup" {
   }
 }
 
-resource "docker_container" "vms_container" {
+resource "docker_container" "backend_container" {
   name    = "cctv-visionfusion-backend"
   image   = "cctv-visionfusion-backend-app:latest"
   restart = "unless-stopped"
@@ -129,9 +129,7 @@ resource "docker_container" "vms_container" {
     "RMQ_PORT=${var.rmq_port}",
     "BACKEND_RMQ_USER=${var.backend_rmq_user}",
     "BACKEND_RMQ_PASS=${var.backend_rmq_pass}",
-    "RMQ_VHOST=${var.rmq_vhost}",
-    "RMQ_EXCHANGE_BACKEND_EVENTS=${var.rmq_exchange_backend_events}",
-    "RMQ_EXCHANGE_BACKEND_TRIGGERS=${var.rmq_exchange_backend_triggers}"
+    "RMQ_VHOST=${var.rmq_vhost}"
   ]
 
   depends_on = [

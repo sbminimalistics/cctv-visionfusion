@@ -18,7 +18,7 @@ variable "ssh_key_path" {
 variable "db_name" {
   type        = string
   description = "Database name"
-  default     = "vms_db"
+  default     = "cctv-vf_db"
 }
 
 variable "db_port" {
@@ -48,7 +48,7 @@ variable "backend_db_pass" {
 variable "backend_db_schema" {
   type        = string
   description = "Database schema used for producer service"
-  default     = "vms_backend"
+  default     = "cctvvf_backend"
 }
 
 variable "dashboard_db_user" {
@@ -66,7 +66,7 @@ variable "dashboard_db_pass" {
 variable "dashboard_db_schema" {
   type        = string
   description = "Database schema used for dashboard service"
-  default     = "vms_dashboard"
+  default     = "cctvvf_dashboard"
 }
 
 variable "rmq_host" {
@@ -84,7 +84,7 @@ variable "rmq_port" {
 variable "rmq_vhost" {
   type        = string
   description = "RabbitMQ vhost"
-  default     = "vms"
+  default     = "cctv-vf"
 }
 
 variable "rmq_erlang_cookie" {
@@ -135,16 +135,6 @@ variable "downloader_rmq_pass" {
   description = "Password for downloader service"
 }
 
-variable "rmq_exchange_backend_events" {
-  type        = string
-  default     = "devices.events.topic"
-}
-
-variable "rmq_exchange_backend_triggers" {
-  type        = string
-  default     = "processor.triggers.topic"
-}
-
 variable "rmq_queue_dashboard_feed" {
   type        = string
   default     = "dashboard_feed"
@@ -164,7 +154,7 @@ variable "admin_minio_pass" {
 variable "minio_host" {
   type        = string
   description = "minIO service host"
-  default     = "vms"
+  default     = ""
 }
 
 variable "minio_port" {

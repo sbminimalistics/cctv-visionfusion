@@ -2,13 +2,13 @@
   "rabbit_version": "4.0.0",
   "vhosts": [
     {
-      "name": "vms"
+      "name": "cctv-vf"
     }
   ],
   "exchanges": [
     {
       "name": "devices.events.topic",
-      "vhost": "vms",
+      "vhost": "cctv-vf",
       "type": "topic",
       "durable": true,
       "auto_delete": false,
@@ -17,7 +17,7 @@
     },
     {
       "name": "processor.triggers.topic",
-      "vhost": "vms",
+      "vhost": "cctv-vf",
       "type": "topic",
       "durable": true,
       "auto_delete": false,
@@ -28,7 +28,7 @@
   "queues": [
     {
       "name": "dashboard_feed",
-      "vhost": "vms",
+      "vhost": "cctv-vf",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -39,7 +39,7 @@
     },
     {
       "name": "dashboard_triggers",
-      "vhost": "vms",
+      "vhost": "cctv-vf",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -50,7 +50,7 @@
     },
     {
       "name": "image_refs",
-      "vhost": "vms",
+      "vhost": "cctv-vf",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -63,7 +63,7 @@
   "bindings": [
     {
       "source": "devices.events.topic",
-      "vhost": "vms",
+      "vhost": "cctv-vf",
       "destination": "dashboard_feed",
       "destination_type": "queue",
       "routing_key": "#",
@@ -71,7 +71,7 @@
     },
     {
       "source": "processor.triggers.topic",
-      "vhost": "vms",
+      "vhost": "cctv-vf",
       "destination": "dashboard_triggers",
       "destination_type": "queue",
       "routing_key": "#",

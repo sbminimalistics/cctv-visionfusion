@@ -1,5 +1,5 @@
 # node.js ui image build
-resource "docker_image" "vms_dashboard" {
+resource "docker_image" "cctv-vf_dashboard" {
   name = "cctv-visionfusion-dashboard:latest"
 
   build {
@@ -11,9 +11,9 @@ resource "docker_image" "vms_dashboard" {
 }
 
 # node.js container (cctv-visionfusion-dashboard)
-resource "docker_container" "vms_ui_container" {
+resource "docker_container" "cctv-vf_ui_container" {
   name    = "cctv-visionfusion-dashboard"
-  image   = docker_image.vms_dashboard.image_id 
+  image   = docker_image.cctv-vf_dashboard.image_id 
   restart = "unless-stopped"
 
   ports {
@@ -28,14 +28,14 @@ resource "docker_container" "vms_ui_container" {
   env = [
     "DB_HOST=${var.remote_ubuntu_ip}",
     "DB_PORT=5432",
-    "DB_NAME=vms_production",
+    "DB_NAME=cctv-vf_production",
     "DASHBOARD_DB_USER=${var.dashboard_db_user}",
     "DASHBOARD_DB_PASS=${var.dashboard_db_pass}",
     "RMQ_HOST=${var.rmq_host}",
     "RMQ_PORT=${var.rmq_port}",
     "DASHBOARD_RMQ_USER=${var.dashboard_rmq_user}",
     "DASHBOARD_RMQ_PASS=${var.dashboard_rmq_pass}",
-    "RMQ_VHOST=vms",
+    "RMQ_VHOST=${var.rmq_vhost}",
     "MINIO_HOST=${var.minio_host}",
     "MINIO_PORT=${var.minio_port}",
     "MINIO_USER=${var.dashboard_minio_user}",

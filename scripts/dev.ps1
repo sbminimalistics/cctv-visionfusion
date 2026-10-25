@@ -51,7 +51,7 @@ docker run -d --name rmq-dev `
   rabbitmq:4-management-alpine
 
 # launch postgresql database instance
-$dbName = if (${env:DB_NAME}) { $env:DB_NAME } else {"vms_database"}
+$dbName = if (${env:DB_NAME}) { $env:DB_NAME } else {"cctv-vf_database"}
 $dbPort = if (${env:DB_PORT}) { $env:DB_PORT } else {"5432"}
 $backendUser = $env:BACKEND_DB_USER
 $backendPass = $env:BACKEND_DB_PASS
@@ -148,7 +148,7 @@ Start-Sleep -Seconds 2
 #   -d `
 #   opencv5-image | Out-Null
 
-Write-Host "[dev] launching workspace components natively..." -ForegroundColor Green
+Write-Host "[dev] launching workspace components natively..." -ForegroundColor Yellow
 
 # set execution configurations
 $concurrentArgs = @(

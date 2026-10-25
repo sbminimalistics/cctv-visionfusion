@@ -82,20 +82,20 @@ resource "terraform_data" "rabbitmq_provisioning" {
 
       "sleep 2",
       
-      # "docker exec rabbitmq-broker rabbitmqctl add_vhost vms || true",
+      # "docker exec rabbitmq-broker rabbitmqctl add_vhost cctv-vf || true",
       
       "docker exec rabbitmq-broker rabbitmqctl delete_user \"${var.backend_rmq_user}\" || true",
       "docker exec rabbitmq-broker rabbitmqctl add_user \"${var.backend_rmq_user}\" \"${var.backend_rmq_pass}\"",
       "docker exec rabbitmq-broker rabbitmqctl set_user_tags \"${var.backend_rmq_user}\" management",
-      "docker exec rabbitmq-broker rabbitmqctl set_permissions -p vms \"${var.backend_rmq_user}\" \".*\" \".*\" \".*\"",
+      "docker exec rabbitmq-broker rabbitmqctl set_permissions -p cctv-vf \"${var.backend_rmq_user}\" \".*\" \".*\" \".*\"",
 
       "docker exec rabbitmq-broker rabbitmqctl delete_user \"${var.downloader_rmq_user}\" || true",
       "docker exec rabbitmq-broker rabbitmqctl add_user \"${var.downloader_rmq_user}\" \"${var.downloader_rmq_pass}\"",
-      "docker exec rabbitmq-broker rabbitmqctl set_permissions -p vms \"${var.downloader_rmq_user}\" \"^\\$\" \".*\" \".*\"",
+      "docker exec rabbitmq-broker rabbitmqctl set_permissions -p cctv-vf \"${var.downloader_rmq_user}\" \"^\\$\" \".*\" \".*\"",
 
       "docker exec rabbitmq-broker rabbitmqctl delete_user \"${var.dashboard_rmq_user}\" || true",
       "docker exec rabbitmq-broker rabbitmqctl add_user \"${var.dashboard_rmq_user}\" \"${var.dashboard_rmq_pass}\"",
-      "docker exec rabbitmq-broker rabbitmqctl set_permissions -p vms \"${var.dashboard_rmq_user}\" \"^\\$\" \"^\\$\" \".*\""
+      "docker exec rabbitmq-broker rabbitmqctl set_permissions -p cctv-vf \"${var.dashboard_rmq_user}\" \"^\\$\" \"^\\$\" \".*\""
     ]
   }
 }
@@ -116,7 +116,7 @@ resource "terraform_data" "rabbitmq_policy_provisioning" {
     }
 
     inline = [
-      "docker exec rabbitmq-broker rabbitmqctl set_policy -p vms camera_queue_limits \"^camera\\.\" \"{\\\"max-length\\\":5000,\\\"overflow\\\":\\\"drop-head\\\",\\\"message-ttl\\\":86400000}\" --apply-to queues"
+      "docker exec rabbitmq-broker rabbitmqctl set_policy -p cctv-vf camera_queue_limits \"^camera\\.\" \"{\\\"max-length\\\":5000,\\\"overflow\\\":\\\"drop-head\\\",\\\"message-ttl\\\":86400000}\" --apply-to queues"
     ]
   }
 }
