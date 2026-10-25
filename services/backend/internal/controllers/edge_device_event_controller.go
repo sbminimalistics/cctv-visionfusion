@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/internal/edge_device"
@@ -66,6 +67,7 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 			case <-ctx.Done():
 				return
 			case cev := <-c.incomingCompositionEvents:
+				addUUID(&cev)
 				fmt.Println("\033[31mcomposition event received:\033[0m", cev)
 				for _, route := range routing {
 					re := route.Source.EventTypeRegexp.Regexp
@@ -80,6 +82,7 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 					}
 				}
 			case ev := <-c.incomingEvents:
+				addUUID(&ev)
 				for _, comp := range c.compositions {
 					comp.TrackEvent(ev)
 				}
@@ -98,4 +101,16 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 			}
 		}
 	}()
+}
+
+type UUIDHolder interface {
+	GetUUID() string
+	SetUUID(string)
+}
+
+func addUUID[T UUIDHolder](target T) {
+	if target.GetUUID() == "" {
+		newUUID := uuid.New()
+		target.SetUUID(newUUID.String())
+	}
 }

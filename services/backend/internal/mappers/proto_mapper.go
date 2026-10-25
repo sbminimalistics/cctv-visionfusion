@@ -11,6 +11,7 @@ import (
 // maps a domain EventPacket into its corresponding Protobuf structured message payload.
 func DeviceEventToProto(packet edge_device.EventPacket) *events.DeviceEvent {
 	return &events.DeviceEvent{
+		Uuid:         packet.GetUUID(),
 		DeviceId:     packet.DeviceID,
 		Manufacturer: string(packet.Manufacturer),
 		EventType:    edge_device.BasicParsedMessage(packet.Parsed).GetEventType(),
@@ -23,6 +24,7 @@ func DeviceEventToProto(packet edge_device.EventPacket) *events.DeviceEvent {
 func CompositionTriggerToProto(packet event.CompositionTriggerEvent) *events.CompositionEvent {
 	sources := toProtoSources(packet.Sources)
 	return &events.CompositionEvent{
+		Uuid:      packet.GetUUID(),
 		Id:        packet.CompositionID,
 		Sources:   sources,
 		EventTime: timestamppb.Now(),

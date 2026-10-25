@@ -37,7 +37,7 @@ class ImageMessageHandler(AMQPMessagingHandler):
 def main():
     rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
     rabbitmq_port = os.getenv('RABBITMQ_PORT', '5672')
-    rabbitmq_vhost = os.getenv('RABBITMQ_VHOST', 'vms')
+    rabbitmq_vhost = os.getenv('RABBITMQ_VHOST', 'cctv-vf')
     queue_name = os.getenv('RABBITMQ_QUEUE', 'image_refs')
     rabbitmq_user = os.getenv('DOWNLOADER_RMQ_USER', 'a')
     rabbitmq_pass = os.getenv('DOWNLOADER_RMQ_PASS', 'b')

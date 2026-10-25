@@ -24,11 +24,12 @@ const (
 
 type DeviceEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	EventTime     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=event_time,json=eventTime,proto3" json:"event_time,omitempty"`
-	Manufacturer  string                 `protobuf:"bytes,3,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
-	EventType     string                 `protobuf:"bytes,4,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
-	RawPayload    []byte                 `protobuf:"bytes,5,opt,name=raw_payload,json=rawPayload,proto3" json:"raw_payload,omitempty"`
+	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	EventTime     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=event_time,json=eventTime,proto3" json:"event_time,omitempty"`
+	Manufacturer  string                 `protobuf:"bytes,4,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
+	EventType     string                 `protobuf:"bytes,5,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
+	RawPayload    []byte                 `protobuf:"bytes,6,opt,name=raw_payload,json=rawPayload,proto3" json:"raw_payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,6 +62,13 @@ func (x *DeviceEvent) ProtoReflect() protoreflect.Message {
 // Deprecated: Use DeviceEvent.ProtoReflect.Descriptor instead.
 func (*DeviceEvent) Descriptor() ([]byte, []int) {
 	return file_events_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *DeviceEvent) GetUuid() string {
+	if x != nil {
+		return x.Uuid
+	}
+	return ""
 }
 
 func (x *DeviceEvent) GetDeviceId() string {
@@ -100,9 +108,10 @@ func (x *DeviceEvent) GetRawPayload() []byte {
 
 type CompositionEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Sources       []*CompositionSource   `protobuf:"bytes,2,rep,name=sources,proto3" json:"sources,omitempty"`
-	EventTime     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=event_time,json=eventTime,proto3" json:"event_time,omitempty"`
+	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Sources       []*CompositionSource   `protobuf:"bytes,3,rep,name=sources,proto3" json:"sources,omitempty"`
+	EventTime     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=event_time,json=eventTime,proto3" json:"event_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -135,6 +144,13 @@ func (x *CompositionEvent) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CompositionEvent.ProtoReflect.Descriptor instead.
 func (*CompositionEvent) Descriptor() ([]byte, []int) {
 	return file_events_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CompositionEvent) GetUuid() string {
+	if x != nil {
+		return x.Uuid
+	}
+	return ""
 }
 
 func (x *CompositionEvent) GetId() string {
@@ -214,21 +230,23 @@ var File_events_proto protoreflect.FileDescriptor
 
 const file_events_proto_rawDesc = "" +
 	"\n" +
-	"\fevents.proto\x12\acctv_vf\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc9\x01\n" +
-	"\vDeviceEvent\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x129\n" +
+	"\fevents.proto\x12\acctv_vf\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdd\x01\n" +
+	"\vDeviceEvent\x12\x12\n" +
+	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x1b\n" +
+	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x129\n" +
 	"\n" +
-	"event_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\teventTime\x12\"\n" +
-	"\fmanufacturer\x18\x03 \x01(\tR\fmanufacturer\x12\x1d\n" +
+	"event_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\teventTime\x12\"\n" +
+	"\fmanufacturer\x18\x04 \x01(\tR\fmanufacturer\x12\x1d\n" +
 	"\n" +
-	"event_type\x18\x04 \x01(\tR\teventType\x12\x1f\n" +
-	"\vraw_payload\x18\x05 \x01(\fR\n" +
-	"rawPayload\"\x93\x01\n" +
-	"\x10CompositionEvent\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x124\n" +
-	"\asources\x18\x02 \x03(\v2\x1a.cctv_vf.CompositionSourceR\asources\x129\n" +
+	"event_type\x18\x05 \x01(\tR\teventType\x12\x1f\n" +
+	"\vraw_payload\x18\x06 \x01(\fR\n" +
+	"rawPayload\"\xa7\x01\n" +
+	"\x10CompositionEvent\x12\x12\n" +
+	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x124\n" +
+	"\asources\x18\x03 \x03(\v2\x1a.cctv_vf.CompositionSourceR\asources\x129\n" +
 	"\n" +
-	"event_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\teventTime\"O\n" +
+	"event_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\teventTime\"O\n" +
 	"\x11CompositionSource\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1d\n" +
 	"\n" +

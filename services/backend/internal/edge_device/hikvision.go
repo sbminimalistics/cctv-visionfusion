@@ -35,7 +35,7 @@ type HikvisionPacketParser struct {
 func (h *HikvisionPacketParser) Parse(packet []byte) (BasicParsedMessage, error) {
 	var ev HikvisionParsedMessage
 	if err := xml.Unmarshal(packet, &ev); err == nil {
-		fmt.Printf("@camera EVENT MATCHED: [%s] Description: %s ip: %s \n", ev.EventType, ev.EventDescription, ev.IPAddress)
+		fmt.Printf("@device event: %s description: %s ip: %s \n", ev.EventType, ev.EventDescription, ev.IPAddress)
 
 		return &ev, nil
 	} else {

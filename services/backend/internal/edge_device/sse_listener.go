@@ -17,10 +17,19 @@ import (
 type DeviceEventType string
 
 type EventPacket struct {
+	uuid         string
 	DeviceID     string
 	Manufacturer config.Manufacturer
 	Raw          []byte
 	Parsed       BasicParsedMessage
+}
+
+func (r *EventPacket) GetUUID() string {
+	return r.uuid
+}
+
+func (r *EventPacket) SetUUID(uuid string) {
+	r.uuid = uuid
 }
 
 type SSEListener struct {

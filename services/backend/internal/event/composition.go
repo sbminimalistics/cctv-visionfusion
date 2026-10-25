@@ -15,9 +15,18 @@ const (
 )
 
 type CompositionTriggerEvent struct {
+	uuid          string
 	EventType     CompositionTriggerType
 	CompositionID string
 	Sources       []config.CompositionSourceConfig
+}
+
+func (r *CompositionTriggerEvent) GetUUID() string {
+	return r.uuid
+}
+
+func (r *CompositionTriggerEvent) SetUUID(uuid string) {
+	r.uuid = uuid
 }
 
 type EventContainer struct {
