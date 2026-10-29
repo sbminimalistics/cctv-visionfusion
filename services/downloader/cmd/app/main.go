@@ -72,7 +72,7 @@ func main() {
 					if err != nil {
 					} else {
 						destDirPath := path.Join(
-							"./downloads",
+							config.Config.DownloadsPath,
 							data.DestinationPath,
 							"/",
 						)

@@ -20,6 +20,7 @@ type AppConfig struct {
 	RabbitMQ       RabbitMQConfig `yaml:"rabbitmq"`
 	RabbitMQQueue  string         `env:"RMQ_QUEUE_DOWNLOADER_FEED"`
 	BackendBaseURL string         `env:"DOWNLOADER_BACKEND_BASE_URL"`
+	DownloadsPath  string         `env:"DOWNLOADER_DOWNLOADS_PATH"`
 }
 
 var Config AppConfig

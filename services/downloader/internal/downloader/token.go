@@ -61,7 +61,7 @@ func ExchangeToken(apiEndpoint string, token string) (ResponsePacket, error) {
 		return ResponsePacket{}, err
 	}
 
-	fmt.Println("ExchangeToken token exchanged to:", string(body))
+	// fmt.Println("ExchangeToken token exchanged to:", string(body))
 
 	return inPacket, nil
 }
