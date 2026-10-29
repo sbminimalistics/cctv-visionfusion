@@ -24,7 +24,6 @@ type ResponsePacket struct {
 
 func ExchangeToken(apiEndpoint string, token string) (ResponsePacket, error) {
 	url, err := url.JoinPath(config.Config.BackendBaseURL, apiEndpoint)
-	fmt.Println("ExchangeToken url:", url)
 
 	outPacket := RequestPacket{
 		Token: token,
