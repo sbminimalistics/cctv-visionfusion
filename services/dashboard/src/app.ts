@@ -40,7 +40,7 @@ async function bootstrap() {
     await rmqClient.consumeFromQueue<DeviceEvent>(
         RMQ_QUEUE_DASHBOARD_FEED,
         (msg) => {
-            console.log("content:", msg);
+            // console.log("content:", msg);
             // sseController.handleStream,
         },
         DeviceEvent,
@@ -48,7 +48,7 @@ async function bootstrap() {
     await rmqClient.consumeFromQueue<CompositionEvent>(
         RMQ_QUEUE_DASHBOARD_TRIGGERS,
         (msg) => {
-            console.log("content:", msg);
+            // console.log("content:", msg);
 
             // sseController.handleStream,
         },

@@ -79,7 +79,7 @@ export default class RMQClient {
                         const routingInfo = message.fields.routingKey;
 
                         console.log(
-                            `\nrmq message from queue: ${queueName}, routing key: ${routingInfo}`,
+                            `rmq message from queue: ${queueName}, routing key: ${routingInfo}`,
                         );
 
                         const msg = msgF.decode(message.content);
@@ -95,9 +95,9 @@ export default class RMQClient {
                         onMessage(msg);
 
                         channel.ack(message);
-                        console.log(
-                            "Message successfully processed and Acknowledged (ACK).",
-                        );
+                        // console.log(
+                        //     "Message successfully processed and Acknowledged (ACK).",
+                        // );
                     } catch (processingError) {
                         console.error(
                             "Error parsing message content:",
