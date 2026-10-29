@@ -112,7 +112,7 @@ while ($true) {
 
 Start-Sleep -Seconds 2
 
-Write-Host "[dev] rabbitmq is operational. applying user accounts..." -ForegroundColor Cyan
+Write-Host "[dev] rabbitmq is operational. applying user accounts..." -ForegroundColor Yellow
 
 # configure backend application rmq user
 docker exec rmq-dev rabbitmqctl add_user "${env:BACKEND_RMQ_USER}" "${env:BACKEND_RMQ_PASS}" | Out-Null
@@ -153,9 +153,10 @@ Write-Host "[dev] launching workspace components natively..." -ForegroundColor Y
 # set execution configurations
 $concurrentArgs = @(
     "concurrently",
-    "--names", "BE,DASH,VITE,CV",
-    "--prefix-colors", "cyan,green,magenta",
+    "--names", "BE,DWNLDR,DASH,VITE,CV",
+    "--prefix-colors", "cyan,green,magenta,gray",
     "cd services/backend && go tool air",
+    "cd services/downloader && go tool air",
     "cd services/dashboard && npm run dev",
     "cd services/dashboard/web-ui && npm run dev",
     "cd services/cv/ && watchmedo auto-restart --directory=. --pattern=*.py --recursive -- python main.py"

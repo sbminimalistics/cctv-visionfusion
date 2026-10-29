@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	fmt.Println("starting CCTV VisionFusion ...")
+	fmt.Println("starting CCTV VisionFusion main backend ...")
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -51,8 +51,15 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	// wire device event controller
+	// wire controllers
 	_ = bootstrap.WireEdgeDeviceEventController(ctx, &wg, rmqClient)
+
+	// wire services
+	bootstrap.WireServices(ctx)
+
+	// wire api enpoints
+	fmt.Printf("starting API on port %d ...\n", config.Config.API.Port)
+	wg.Go(func() { bootstrap.WireAPIServer(ctx) })
 
 	<-ctx.Done()
 	fmt.Println("Shutdown initiated. Waiting for edge streams to exit...")

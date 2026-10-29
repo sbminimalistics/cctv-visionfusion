@@ -23,6 +23,15 @@
       "auto_delete": false,
       "internal": false,
       "arguments": {}
+    },
+    {
+      "name": "requests.download.screenshot",
+      "vhost": "cctv-vf",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
     }
   ],
   "queues": [
@@ -38,7 +47,18 @@
       }
     },
     {
-      "name": "dashboard_triggers",
+        "name": "dashboard_triggers",
+        "vhost": "cctv-vf",
+        "durable": true,
+        "auto_delete": false,
+        "arguments": {
+            "x-max-length": 5000,
+            "x-overflow": "drop-head",
+            "x-message-ttl": 86400000
+        }
+    },
+    {
+      "name": "downloader_feed",
       "vhost": "cctv-vf",
       "durable": true,
       "auto_delete": false,
@@ -70,9 +90,17 @@
       "arguments": {}
     },
     {
-      "source": "processor.triggers.topic",
+        "source": "processor.triggers.topic",
+        "vhost": "cctv-vf",
+        "destination": "dashboard_triggers",
+        "destination_type": "queue",
+        "routing_key": "#",
+        "arguments": {}
+    },
+    {
+      "source": "requests.download.screenshot",
       "vhost": "cctv-vf",
-      "destination": "dashboard_triggers",
+      "destination": "downloader_feed",
       "destination_type": "queue",
       "routing_key": "#",
       "arguments": {}

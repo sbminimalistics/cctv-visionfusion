@@ -6,14 +6,15 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/internal/edge_device"
 	"sbminimalistics.com/cctv-visionfusion/internal/event"
 	"sbminimalistics.com/cctv-visionfusion/internal/mappers"
 	"sbminimalistics.com/cctv-visionfusion/internal/messaging"
+	"sbminimalistics.com/cctv-visionfusion/internal/services"
 )
 
 type TrafficSource struct {
@@ -67,7 +68,6 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 			case <-ctx.Done():
 				return
 			case cev := <-c.incomingCompositionEvents:
-				addUUID(&cev)
 				fmt.Println("\033[31mcomposition event received:\033[0m", cev)
 				for _, route := range routing {
 					re := route.Source.EventTypeRegexp.Regexp
@@ -82,14 +82,13 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 					}
 				}
 			case ev := <-c.incomingEvents:
-				addUUID(&ev)
 				for _, comp := range c.compositions {
 					comp.TrackEvent(ev)
 				}
+				routingKey := strings.Join([]string{"device.", ev.DeviceID, ".event"}, "")
 				for _, route := range routing {
 					re := route.Source.EventTypeRegexp.Regexp
 					if route.Source.SourceID == ev.DeviceID && re.MatchString(ev.Parsed.GetEventType()) {
-						routingKey := strings.Join([]string{"device.", ev.DeviceID, ".event"}, "")
 						deviceEvent := mappers.DeviceEventToProto(ev)
 						bytes, err := proto.Marshal(deviceEvent)
 						if err != nil {
@@ -97,6 +96,32 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 						}
 						c.rmqClient.Publish(ctx, route.DestinationExchange, routingKey, bytes)
 					}
+				}
+
+				now := time.Now().UTC()
+				token, expiry, err := services.GetDownloadLinkService().GetNewToken(
+					ev.GetAbsolutePicturePath(),
+					fmt.Sprintf("%s/%d/%d", ev.DeviceID, now.Year(), now.Month()),
+					ev.GetUUID().String(),
+				)
+
+				if err != nil {
+					fmt.Println("token generation failed: %v", err)
+				} else {
+					source := mappers.DownloadInstructionBase{
+						Token:       token,
+						TokenExpiry: expiry,
+						RedeemPath:  "v1/links/redeem",
+					}
+					instruction := mappers.DeviceInstructionToProto(source)
+
+					bytes, _ := proto.Marshal(instruction)
+					c.rmqClient.Publish(
+						ctx,
+						"requests.download.screenshot",
+						routingKey,
+						bytes,
+					)
 				}
 			}
 		}
@@ -106,11 +131,4 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 type UUIDHolder interface {
 	GetUUID() string
 	SetUUID(string)
-}
-
-func addUUID[T UUIDHolder](target T) {
-	if target.GetUUID() == "" {
-		newUUID := uuid.New()
-		target.SetUUID(newUUID.String())
-	}
 }

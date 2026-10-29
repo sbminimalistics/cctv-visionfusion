@@ -22,6 +22,7 @@ const (
 
 type EdgeDeviceConfig struct {
 	Id                  string       `yaml:"id"`
+	Protocol            string       `yaml:"protocol"`
 	Host                string       `yaml:"host"`
 	Port                port         `yaml:"port"`
 	User                string       `yaml:"user"`
@@ -29,6 +30,7 @@ type EdgeDeviceConfig struct {
 	Manufacturer        Manufacturer `yaml:"manufacturer"`
 	DeviceType          DeviceType   `yaml:"device_type"`
 	DestinationExchange string       `yaml:"destination_exchange"`
+	PicturePath         string       `yaml:"picture_path"`
 }
 
 type CompositionSourceConfig struct {
@@ -92,12 +94,17 @@ type Route struct {
 
 type port int
 
+type APIConfig struct {
+	Port port `yaml:"port" env:"BACKEND_API_PORT"`
+}
+
 type AppConfig struct {
 	EdgeDevices       []EdgeDeviceConfig       `yaml:"edge_devices"`
 	EventCompositions []EventCompositionConfig `yaml:"event_compositions"`
 	Routing           []Route                  `yaml:"routing"`
 	DB                DBConfig                 `yaml:"database"`
 	RabbitMQ          RabbitMQConfig           `yaml:"rabbitmq"`
+	API               APIConfig                `yaml:"api"`
 }
 
 var Config AppConfig

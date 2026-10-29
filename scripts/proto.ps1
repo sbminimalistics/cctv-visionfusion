@@ -12,6 +12,9 @@ Write-Host "[dev] workspace root aligned to: $projectRootDir" -ForegroundColor G
 if (-not (Test-Path -Path "services/backend/proto")) {
     New-Item -ItemType Directory -Path "services/backend/proto"
 }
+if (-not (Test-Path -Path "services/downloader/proto")) {
+    New-Item -ItemType Directory -Path "services/downloader/proto"
+}
 if (-not (Test-Path -Path "services/dashboard/proto")) {
     New-Item -ItemType Directory -Path "services/dashboard/proto"
 }
@@ -28,7 +31,8 @@ if (-not (Test-Path -Path \$IncludeCacheDir)) {
 protoc `
 --proto_path=proto `
 --go_out=services/backend/proto `
+--go_out=services/downloader/proto `
 --plugin=protoc-gen-ts_proto="${projectRootDirForward}/services/dashboard/node_modules/.bin/protoc-gen-ts_proto.cmd" `
 --ts_proto_out="${projectRootDirForward}/services/dashboard/proto" `
 --ts_proto_opt=env=node,esModuleInterop=true `
-proto/events.proto
+proto/*.proto

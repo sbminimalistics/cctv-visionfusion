@@ -4,7 +4,7 @@ package cctv_vf;
 
 import "google/protobuf/timestamp.proto";
 
-// Ensures Go generates files into their specific absolute module namespaces
+// Go module namespace
 option go_package = "/events";
 
 message DeviceEvent {

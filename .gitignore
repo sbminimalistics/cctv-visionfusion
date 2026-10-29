@@ -33,3 +33,5 @@ config.yml
 
 *.exe
 services/backend/cctv-visionfusion-backend
+
+services/downloader/downloads

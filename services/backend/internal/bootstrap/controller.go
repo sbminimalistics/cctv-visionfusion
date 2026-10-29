@@ -40,7 +40,7 @@ func WireEdgeDeviceEventController(
 	// start message routing based on the provided config
 	controller.StartMessaging(ctx, config.Config.Routing)
 
-	fmt.Printf("Successfully wired %d edge devices.\n", len(config.Config.EdgeDevices))
+	fmt.Printf("successfully wired %d edge devices\n", len(config.Config.EdgeDevices))
 
 	return controller
 }

@@ -11,25 +11,31 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
 )
 
 type DeviceEventType string
 
 type EventPacket struct {
-	uuid         string
-	DeviceID     string
-	Manufacturer config.Manufacturer
-	Raw          []byte
-	Parsed       BasicParsedMessage
+	uuid                uuid.UUID
+	absolutePicturePath string
+	DeviceID            string
+	Manufacturer        config.Manufacturer
+	Raw                 []byte
+	Parsed              BasicParsedMessage
 }
 
-func (r *EventPacket) GetUUID() string {
+func (r *EventPacket) GetUUID() uuid.UUID {
 	return r.uuid
 }
 
-func (r *EventPacket) SetUUID(uuid string) {
+func (r *EventPacket) SetUUID(uuid uuid.UUID) {
 	r.uuid = uuid
+}
+
+func (r *EventPacket) GetAbsolutePicturePath() string {
+	return r.absolutePicturePath
 }
 
 type SSEListener struct {
@@ -151,7 +157,19 @@ func (r *SSEListener) readAlertStream(ctx context.Context, resp *http.Response) 
 			fmt.Println("[SSE] error parsing packet:", err)
 		}
 
+		eventID, _ := uuid.NewV7()
+
 		var packet = EventPacket{
+			uuid: eventID,
+			absolutePicturePath: fmt.Sprintf(
+				"%s://%s:%s@%s:%d%s",
+				r.Config.Protocol,
+				r.Config.User,
+				r.Config.Password,
+				r.Config.Host,
+				r.Config.Port,
+				r.Config.PicturePath,
+			),
 			DeviceID:     r.DeviceID,
 			Manufacturer: r.Config.Manufacturer,
 			Raw:          data,

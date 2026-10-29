@@ -1,11 +1,13 @@
-cameras:
+edge_devices:
     - id: "unique-device-id"
+      protocol: "http"
       host: "0.0.0.0"
       port: 80
       user: "api_user_placeholder"
       password: "secure_password_placeholder"
       manufacturer: "hikvision"
       device_type: "camera"
+      picture_path: "/ISAPI/Streaming/channels/101/picture"
 
 event_compositions:
     - id: "composition_000"
