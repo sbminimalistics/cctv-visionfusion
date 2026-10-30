@@ -56,8 +56,11 @@ type DownloadLinkService struct {
 func (r *DownloadLinkService) GetLink(token uuid.UUID) (LinkWithExpiry, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	for _, link := range r.links {
+	for idx, link := range r.links {
 		if link.token == token {
+			copy(r.links[idx:], r.links[idx+1:])
+			r.links[len(r.links)-1] = LinkWithExpiry{}
+			r.links = r.links[:len(r.links)-1]
 			return link, true
 		}
 	}
