@@ -1,3 +1,5 @@
+![Go Test Status](https://github.com/sbminimalistics/cctv-visionfusion/actions/workflows/backend-go-test.yml/badge.svg)
+
 # CCTV VisionFusion
 
 CCTV VisionFusion is an event-driven security platform that combines inputs from CCTV cameras and physical motion sensors to eliminate false alarms. The system uses configurable event combinations to produce reliable alert triggers. By utilizing this smart event overlay strategy, the platform drastically minimizes false positives before forwarding verified alerts to the UI dashboard web app. The dashboard serves as the central control hub, presenting users with connected device statuses, historical data, real-time alert feeds, and system configurations.
