@@ -106,7 +106,7 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 				)
 
 				if err != nil {
-					fmt.Println("token generation failed: %v", err)
+					fmt.Printf("token generation failed: %v", err)
 				} else {
 					source := mappers.DownloadInstructionBase{
 						Token:       token,
