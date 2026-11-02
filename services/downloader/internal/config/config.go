@@ -16,8 +16,17 @@ type RabbitMQConfig struct {
 
 type port int
 
+type SeaweedConfig struct {
+	Host     string `yaml:"host" env:"SEAWEED_HOST"`
+	Port     port   `yaml:"port" env:"SEAWEED_API_PORT"`
+	User     string `yaml:"user" env:"DOWNLOADER_SEAWEED_USER"`
+	Password string `yaml:"password" env:"DOWNLOADER_SEAWEED_PASS"`
+	Bucket   string `yaml:"bucket" env:"SEAWEED_BUCKET"`
+}
+
 type AppConfig struct {
 	RabbitMQ       RabbitMQConfig `yaml:"rabbitmq"`
+	Seaweed        SeaweedConfig  `yaml:"seaweed"`
 	RabbitMQQueue  string         `env:"RMQ_QUEUE_DOWNLOADER_FEED"`
 	BackendBaseURL string         `env:"DOWNLOADER_BACKEND_BASE_URL"`
 	DownloadsPath  string         `env:"DOWNLOADER_DOWNLOADS_PATH"`

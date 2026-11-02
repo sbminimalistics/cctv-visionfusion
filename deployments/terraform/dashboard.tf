@@ -36,14 +36,11 @@ resource "docker_container" "cctv-vf_ui_container" {
     "DASHBOARD_RMQ_USER=${var.dashboard_rmq_user}",
     "DASHBOARD_RMQ_PASS=${var.dashboard_rmq_pass}",
     "RMQ_VHOST=${var.rmq_vhost}",
-    "MINIO_HOST=${var.minio_host}",
-    "MINIO_PORT=${var.minio_port}",
-    "MINIO_USER=${var.dashboard_minio_user}",
-    "MINIO_PASS=${var.dashboard_minio_pass}",
   ]
 
   depends_on = [
     docker_network.cctv_vf_net,
-    terraform_data.rabbitmq_policy_provisioning
+    terraform_data.rabbitmq_policy_provisioning,
+    docker_container.seaweedfs
   ]
 }

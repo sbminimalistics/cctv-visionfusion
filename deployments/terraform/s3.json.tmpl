@@ -1,0 +1,47 @@
+{
+    "identities": [
+        {
+            "name": "downloader_service",
+            "credentials": [
+                {
+                    "accessKey": "${downloader_user}",
+                    "secretKey": "${downloader_pass}"
+                }
+            ],
+            "actions": ["Write", "List", "Tagging"],
+            "buckets": ["${bucket}"]
+        },
+        {
+            "name": "cv_service",
+            "credentials": [
+                {
+                    "accessKey": "${cv_user}",
+                    "secretKey": "${cv_pass}"
+                }
+            ],
+            "actions": ["Read", "Tagging"],
+            "buckets": ["${bucket}"]
+        },
+        {
+            "name": "dashboard_ui"
+            "credentials": [
+                {
+                    "accessKey": "${dashboard_user}",
+                    "secretKey": "${dashboard_pass}"
+                }
+            ],
+            "actions": ["Read", "List"],
+            "buckets": ["${bucket}"]
+        },
+        {
+            "name": "admin_user",
+            "credentials": [
+                {
+                    "accessKey": "${admin_user}",
+                    "secretKey": "${admin_pass}"
+                }
+            ],
+            "actions": ["Admin", "Read", "Write", "List"]
+        }
+    ]
+}

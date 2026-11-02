@@ -1,6 +1,6 @@
 variable "remote_ubuntu_ip" {
   type        = string
-  description = "The IP address of your remote Ubuntu machine"
+  description = "remote machine IP"
   default     = "192.168.0.178"
 }
 
@@ -145,44 +145,80 @@ variable "rmq_queue_dashboard_triggers" {
   default     = "dashboard_triggers"
 }
 
-variable "admin_minio_pass" {
+variable "seaweed_host" {
+  type        = string
+  description = "SeaweedFS host"
+  default     = "seaweedfs"
+}
+
+variable "seaweed_master_port" {
+  type        = string
+  description = "SeaweedFS master service port"
+  default     = "9333"
+}
+
+variable "seaweed_volume_port" {
+  type        = string
+  description = "SeaweedFS volume service port"
+  default     = "8080"
+}
+
+variable "seaweed_api_port" {
+  type        = string
+  description = "SeaweedFS api service port"
+  default     = "8333"
+}
+
+variable "seaweed_admin_user" {
+  type        = string
+  description = "SeaweedFS admin user name"
+  default     = "admin"
+}
+
+variable "seaweed_admin_pass" {
   type        = string
   sensitive   = true
-  description = "The minIO admin password used by Terraform"
+  description = "SeaweedFS admin password"
 }
 
-variable "minio_host" {
+variable "seaweed_bucket" {
   type        = string
-  description = "minIO service host"
-  default     = ""
+  description = "SeaweedFS s3 bucket name"
+  default     = "pictures"
 }
 
-variable "minio_port" {
+variable "seaweed_downloader_user" {
   type        = string
-  description = "minIO service port"
-  default     = "9000"
+  description = "Username for downloader service"
+  default     = "downloader_worker"
 }
 
-variable "dashboard_minio_user" {
+variable "seaweed_downloader_pass" {
+  type        = string
+  sensitive   = true
+  description = "Password for downloader service"
+}
+
+variable "seaweed_dashboard_user" {
   type        = string
   description = "Username for dashboard service"
-  default     = "dashboard_minio"
+  default     = "dashboard_worker"
 }
 
-variable "dashboard_minio_pass" {
+variable "seaweed_dashboard_pass" {
   type        = string
   sensitive   = true
   description = "Password for dashboard service"
 }
 
-variable "downloader_minio_user" {
+variable "seaweed_cv_user" {
   type        = string
-  description = "Username for downloader service"
-  default     = "downloader_minio"
+  description = "Username for cv service"
+  default     = "cv_worker"
 }
 
-variable "downloader_minio_pass" {
+variable "seaweed_cv_pass" {
   type        = string
   sensitive   = true
-  description = "Password for downloader service"
+  description = "Password for cv service"
 }

@@ -7,11 +7,12 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"os"
-	"path"
-	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/minio/minio-go/v7"
+	"sbminimalistics.com/cctv-visionfusion/downloader/internal/config"
+	"sbminimalistics.com/cctv-visionfusion/downloader/internal/services"
 )
 
 // Status represents the state of a single download task.
@@ -106,6 +107,7 @@ func (r *FileDownloader) DownloadBatch(jobs []DownloadJob) <-chan DownloadProgre
 
 // downloadFile performs the actual HTTP GET request and file persistence.
 func (fd *FileDownloader) downloadFile(ctx context.Context, job DownloadJob, progress chan<- DownloadProgress) {
+	fmt.Println("downloadFile", job)
 	progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusStarted}
 
 	// Build the HTTP request to support context cancellation midway
@@ -144,40 +146,30 @@ func (fd *FileDownloader) downloadFile(ctx context.Context, job DownloadJob, pro
 		return
 	}
 
-	ext, err := getFileExtension(&headerBytes)
-	if err != nil {
-		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
-		return
-	}
-	finalPath := path.Join(job.SaveDir, fmt.Sprintf("%s%s", job.SaveBaseFilename, ext))
-
-	// ensure the destination directory exists
-	if err := os.MkdirAll(filepath.Dir(finalPath), os.ModePerm); err != nil {
-		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
-		return
-	}
-
-	// create the destination file
-	out, err := os.Create(
-		path.Join(job.SaveDir, fmt.Sprintf("%s%s", job.SaveBaseFilename, ext)),
-	)
-	if err != nil {
-		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
-		return
-	}
-	defer out.Close()
-
-	// Stream directly from the response body to the file on disk (low memory footprint)
-	_, err = io.Copy(out, br)
+	contentType, ext, err := getTypeAndExtension(&headerBytes)
 	if err != nil {
 		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
 		return
 	}
 
+	objectName := fmt.Sprintf("%s%s", job.SaveBaseFilename, ext)
+	fmt.Printf("Target Object Key: '%s'\n", objectName)
+	_, err = services.GetS3Service().PutObject(ctx, config.Config.Seaweed.Bucket, objectName, br, -1, minio.PutObjectOptions{
+		ContentType: contentType,
+		PartSize:    5 * 1024 * 1024, // 5MB internal buffer chunks for dynamic streaming
+	})
+
+	if err != nil {
+		fmt.Println("s3 save failed, error:", err, config.Config.Seaweed.Bucket)
+		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
+		return
+	}
+
+	fmt.Println("s3 save success")
 	progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusCompleted}
 }
 
-func getFileExtension(header *[]byte) (string, error) {
+func getTypeAndExtension(header *[]byte) (string, string, error) {
 	contentType := http.DetectContentType(*header)
 
 	// return contentType, nil
@@ -185,7 +177,7 @@ func getFileExtension(header *[]byte) (string, error) {
 	extensions, err := mime.ExtensionsByType(contentType)
 	if err != nil || len(extensions) == 0 {
 		// Fallback for custom overrides or unrecognized binaries
-		return "", err
+		return contentType, "", err
 	}
 
 	ctParts := strings.Split(contentType, "/")
@@ -201,5 +193,5 @@ func getFileExtension(header *[]byte) (string, error) {
 	if pick == "" {
 		pick = extensions[0]
 	}
-	return pick, nil
+	return contentType, pick, nil
 }

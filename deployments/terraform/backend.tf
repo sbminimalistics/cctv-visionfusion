@@ -110,8 +110,8 @@ resource "docker_container" "backend_container" {
   restart = "unless-stopped"
 
   ports {
-    internal = 8080
-    external = 8080
+    internal = 8888
+    external = 8888
   }
 
   networks_advanced {

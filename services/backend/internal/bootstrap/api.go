@@ -26,7 +26,6 @@ type RedeemVoucherResponse struct {
 }
 
 func redeemHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("api downloadPathHandler", r.URL.Path)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("redeemHandler error: %s\n", err)

@@ -13,6 +13,7 @@ import (
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/downloader"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/messaging"
+	"sbminimalistics.com/cctv-visionfusion/downloader/internal/services"
 	"sbminimalistics.com/cctv-visionfusion/downloader/proto/downloads"
 )
 
@@ -21,6 +22,8 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+
+	services.InitS3Service(ctx)
 
 	var wg sync.WaitGroup
 

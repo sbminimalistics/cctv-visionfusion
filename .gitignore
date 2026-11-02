@@ -32,6 +32,6 @@ config.yml
 **/dist
 
 *.exe
-services/backend/cctv-visionfusion-backend
+services/backend/cctv-visionfusion-backend-app
 
-services/downloader/downloads
+downloads

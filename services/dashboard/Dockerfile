@@ -13,6 +13,7 @@ RUN npm ci
 # copy source files
 # COPY tsconfig.json ./
 COPY src/ ./src/
+COPY proto/ ./proto/
 COPY public/ ./public/
 
 # compile typescript to javascript
@@ -32,9 +33,8 @@ ENV NODE_ENV=production
 # create a secure, non-root system user context for process insulation
 USER node
 
-# copy production runtime dependency modules from the builder stage
-COPY --chown=node:node --from=builder /app/node_modules/amqplib ./node_modules/amqplib
-COPY --chown=node:node --from=builder /app/node_modules/dotenv ./node_modules/dotenv
+# Copy ALL production runtime dependencies at once
+COPY --chown=node:node --from=builder /app/node_modules ./node_modules
 
 # copy compiled distribution artifacts, assets, and base layouts
 COPY --chown=node:node --from=builder /app/dist ./dist

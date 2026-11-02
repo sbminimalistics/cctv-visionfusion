@@ -30,14 +30,103 @@ if (Test-Path $envFilePath) {
 
 Write-Host "[dev] starting local infrastructure..." -ForegroundColor Cyan
 
-# launch rabbitmq core broker instance using env bindings
-$rmqPort = if ($env:RMQ_PORT) { $env:RMQ_PORT } else { "5672" }
-$dbPort  = if ($env:DB_PORT)  { $env:DB_PORT }  else { "5432" }
-
 Write-Host "[dev] setting up docker dev-network..." -ForegroundColor DarkCyan
 if (-not (docker network ls -q -f name=dev-network)) {
     docker network create dev-network | Out-Null
 }
+
+Write-Host "[dev] spinning up SeaweedFS box..." -ForegroundColor Gray
+
+if (-not (Test-Path -Path "${env:SEAWEED_HOST_PATH}")) {
+    New-Item -ItemType Directory -Path "s${env:SEAWEED_HOST_PATH}"
+}
+
+# SeaweedFS includes a native, lightweight administration tool called 'wed' or 's3.config' 
+# We can create a config file directly on Windows host path that SeaweedFS reads!
+$s3ConfigPath = "${env:SEAWEED_HOST_PATH}\s3.json"
+$s3ConfigContent = @{
+    "identities" = @(
+        # downloader
+        @{
+            "name"        = "downloader_service"
+            "credentials" = @(
+                @{
+                    "accessKey" = "${env:DOWNLOADER_SEAWEED_USER}"
+                    "secretKey" = "${env:DOWNLOADER_SEAWEED_PASS}"
+                }
+            )
+            "actions"     = @("Write", "List", "Tagging")
+            "buckets"     = @("${env:SEAWEED_BUCKET}")
+        },
+        # cv
+        @{
+            "name"        = "cv_service"
+            "credentials" = @(
+                @{
+                    "accessKey" = "${env:CV_SEAWEED_USER}"
+                    "secretKey" = "${env:CV_SEAWEED_PASS}"
+                }
+            )
+            "actions"     = @("Read", "Tagging")
+            "buckets"     = @("${env:SEAWEED_BUCKET}")
+        },
+        # dashboard
+        @{
+            "name"        = "dashboard_ui"
+            "credentials" = @(
+                @{
+                    "accessKey" = "${env:DASHBOARD_SEAWEED_USER}"
+                    "secretKey" = "${env:DASHBOARD_SEAWEED_PASS}"
+                }
+            )
+            "actions"     = @("Read", "List") # No write or delete permissions allowed
+            "buckets"     = @("${env:SEAWEED_BUCKET}")
+        },
+        # admin
+        @{
+            "name"        = "admin_user"
+            "credentials" = @(
+                @{
+                    "accessKey" = "${env:SEAWEED_ADMIN_USER}"
+                    "secretKey" = "${env:SEAWEED_ADMIN_PASS}"
+                }
+            )
+            "actions"     = @("Admin", "Read", "Write", "List")
+            # Leaving "buckets" out completely gives this user access to ALL buckets
+        }
+    )
+} | ConvertTo-Json -Depth 5
+
+Set-Content -Path $s3ConfigPath -Value $s3ConfigContent
+
+docker run -d --name seaweedfs-dev `
+  --network dev-network `
+  -p ${env:SEAWEED_MASTER_PORT}:9333 `
+  -p ${env:SEAWEED_VOLUME_PORT}:8080 `
+  -p ${env:SEAWEED_API_PORT}:8333 `
+  -v ${env:SEAWEED_HOST_PATH}:/data `
+  chrislusf/seaweedfs:latest `
+  server -dir=/data -s3 -s3.config=/data/s3.json -s3.allowEmptyFolder=true
+
+# Wait a brief moment for SeaweedFS to initialize
+Write-Host "[dev] Waiting for SeaweedFS to initialize..." -ForegroundColor Yellow
+Start-Sleep -Seconds 3
+
+Write-Host "[dev] creating SeaweedFS credentials and bucket..." -ForegroundColor Gray
+
+# Restart the container quickly just to pick the brand new credentials file
+docker restart seaweedfs-dev | Out-Null
+
+# create the bucket
+Start-Sleep -Seconds 2
+
+"s3.bucket.create -name=${env:SEAWEED_BUCKET}" | docker exec -i seaweedfs-dev weed shell
+
+Write-Host "[dev] SeaweedFS setup complete! Port ${env:SEAWEED_API_PORT} for S3 API endpoint." -ForegroundColor Green
+
+# launch rabbitmq core broker instance using env bindings
+$rmqPort = if ($env:RMQ_PORT) { $env:RMQ_PORT } else { "5672" }
+$dbPort  = if ($env:DB_PORT)  { $env:DB_PORT }  else { "5432" }
 
 Write-Host "[dev] spinning up rabbitmq-dev broker box..." -ForegroundColor Gray
 docker run -d --name rmq-dev `
@@ -59,10 +148,13 @@ $backendSchema = $env:BACKEND_DB_SCHEMA
 $dashboardUser = $env:DASHBOARD_DB_USER
 $dashboardPass = $env:DASHBOARD_DB_PASS
 $dashboardSchema = $env:DASHBOARD_DB_SCHEMA
+$updaterUser = $env:MIGRATION_DB_USER
+$updaterPass = $env:MIGRATION_DB_PASS
 
 $initSqlPath = "${PSScriptRoot}/init-multi-user.sql"
 $sqlContent = @"
 -- Create application-specific roles/users
+CREATE USER ${updaterUser} WITH PASSWORD '${updaterPass}';
 CREATE USER ${backendUser} WITH PASSWORD '${backendPass}';
 CREATE USER ${dashboardUser} WITH PASSWORD '${dashboardPass}';
 
@@ -70,9 +162,20 @@ CREATE USER ${dashboardUser} WITH PASSWORD '${dashboardPass}';
 CREATE SCHEMA ${backendSchema} AUTHORIZATION ${backendUser};
 CREATE SCHEMA ${dashboardSchema} AUTHORIZATION ${dashboardUser};
 
+-- grant the migrator permissions to create things inside both schemas
+GRANT CREATE, USAGE ON SCHEMA ${backendSchema} TO ${updaterUser};
+GRANT CREATE, USAGE ON SCHEMA ${dashboardSchema} TO ${updaterUser};
+
 -- grant targeted schema permissions to maintain complete application safety boundaries
 GRANT ALL ON SCHEMA ${backendSchema} TO ${backendUser};
 GRANT ALL ON SCHEMA ${dashboardSchema} TO ${dashboardUser};
+
+-- default privileges explicitly by SCHEMA
+ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${backendSchema} 
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${backendUser};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${dashboardSchema} 
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${dashboardUser};
 "@
 Set-Content -Path ${initSqlPath} -Value ${sqlContent} -Encoding UTF8
 
@@ -81,8 +184,8 @@ Write-Host "[dev] starting db-dev postgresql engine with multi-tenant workspace.
 docker run -d --name db-dev `
   -p "${dbPort}:5432" `
   -e "POSTGRES_DB=${dbName}" `
-  -e "POSTGRES_USER=admin" `
-  -e "POSTGRES_PASSWORD=adminpass123" `
+  -e "POSTGRES_USER=${env:DB_ADMIN_USER}" `
+  -e "POSTGRES_PASSWORD=${env:DB_ADMIN_PASS}" `
   -v "${initSqlPath}:/docker-entrypoint-initdb.d/init-multi-user.sql:ro" `
   postgres:16-alpine
 
@@ -169,8 +272,8 @@ try {
 finally {
     # this block is guaranteed to execute by the OS, even during a Ctrl+C force-abort
     Write-Host "`n[dev] cleaning up local development containers..." -ForegroundColor Yellow
-    docker stop rmq-dev db-dev | Out-Null
-    docker rm rmq-dev db-dev | Out-Null
+    docker stop rmq-dev db-dev seaweedfs-dev | Out-Null
+    docker rm rmq-dev db-dev seaweedfs-dev | Out-Null
     Write-Host "[dev] backend sandbox containers removed successfully." -ForegroundColor Green
 }
 
