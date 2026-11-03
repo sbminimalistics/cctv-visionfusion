@@ -74,15 +74,14 @@ func main() {
 					data, err := downloader.ExchangeToken(msg.RedeemPath, msg.Token)
 					if err != nil {
 					} else {
-						destDirPath := path.Join(
-							config.Config.DownloadsPath,
+						savePrefix := path.Join(
+							config.Config.PathPrefix,
 							data.DestinationPath,
-							"/",
-						)
+						) + "/"
 						dl.DownloadBatch([]downloader.DownloadJob{
 							{
 								URL:              data.PictureURL,
-								SaveDir:          destDirPath,
+								SavePrefix:       savePrefix,
 								SaveBaseFilename: data.DestinationBaseFilename,
 							},
 						})
@@ -102,18 +101,18 @@ downloaderProgressLoop:
 		case update := <-progress:
 			switch update.Status {
 			case downloader.StatusStarted:
-				fmt.Printf("[→] Started downloading: %s\n", update.URL)
+				fmt.Printf("started downloading: %s\n", update.URL)
 			case downloader.StatusCompleted:
-				fmt.Printf("[✓] Finished downloading: %s saved to %s\n", update.URL, update.SavePath)
+				fmt.Printf("finished downloading: %s saved to %s\n", update.URL, update.SavePath)
 			case downloader.StatusFailed:
-				fmt.Printf("[X] Failed downloading %s: %v\n", update.URL, update.Err)
+				fmt.Printf("failed downloading %s: %v\n", update.URL, update.Err)
 			}
 		}
 	}
 
 	<-ctx.Done()
-	fmt.Println("Shutdown initiated. Waiting for edge streams to exit...")
+	fmt.Println("shutdown initiated, waiting for edge streams to exit...")
 
 	wg.Wait()
-	fmt.Println("All edge devices disconnected. Closing infrastructure...")
+	fmt.Println("all edge devices disconnected, closing infrastructure...")
 }

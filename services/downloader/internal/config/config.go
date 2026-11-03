@@ -29,7 +29,7 @@ type AppConfig struct {
 	Seaweed        SeaweedConfig  `yaml:"seaweed"`
 	RabbitMQQueue  string         `env:"RMQ_QUEUE_DOWNLOADER_FEED"`
 	BackendBaseURL string         `env:"DOWNLOADER_BACKEND_BASE_URL"`
-	DownloadsPath  string         `env:"DOWNLOADER_DOWNLOADS_PATH"`
+	PathPrefix     string         `env:"DOWNLOADER_SVAE_PATH_PREFIX"`
 }
 
 var Config AppConfig

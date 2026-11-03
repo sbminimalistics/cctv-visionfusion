@@ -105,8 +105,9 @@ docker run -d --name seaweedfs-dev `
   -p ${env:SEAWEED_VOLUME_PORT}:8080 `
   -p ${env:SEAWEED_API_PORT}:8333 `
   -v ${env:SEAWEED_HOST_PATH}:/data `
+  -v "${projectRootDir}/seaweed:/conf" `
   chrislusf/seaweedfs:latest `
-  server -dir=/data -s3 -s3.config=/data/s3.json -s3.allowEmptyFolder=true
+  server -dir=/data -s3 -s3.config=/data/s3.json -s3.allowEmptyFolder=true --lifecycle-configuration /conf/lifecycle.xml
 
 # Wait a brief moment for SeaweedFS to initialize
 Write-Host "[dev] Waiting for SeaweedFS to initialize..." -ForegroundColor Yellow

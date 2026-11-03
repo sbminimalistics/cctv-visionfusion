@@ -43,7 +43,7 @@ func InitS3Service(ctx context.Context) *minio.Client {
 	})
 	// client.TraceOn(os.Stdout)
 	if err != nil {
-		log.Fatalf("Failed to initialize storage client: %v", err)
+		log.Fatalf("failed to initialize storage client: %v", err)
 	}
 	serviceInstance = client
 

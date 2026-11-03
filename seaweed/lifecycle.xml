@@ -1,0 +1,12 @@
+<LifecycleConfiguration xmlns="http://amazonaws.com">
+    <Rule>
+        <ID>CleanAllUnprocessedDeviceFeeds</ID>
+        <Filter>
+            <Prefix>unprocessed/</Prefix>
+        </Filter>
+        <Status>Enabled</Status>
+        <Expiration>
+            <Days>1</Days>
+        </Expiration>
+    </Rule>
+</LifecycleConfiguration>

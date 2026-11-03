@@ -35,7 +35,7 @@ type DownloadProgress struct {
 // DownloadJob defines an individual file download task.
 type DownloadJob struct {
 	URL              string
-	SaveDir          string
+	SavePrefix       string
 	SaveBaseFilename string
 }
 
@@ -44,7 +44,7 @@ type FileDownloader struct {
 	ctx         context.Context
 	workerCount int
 	httpClient  *http.Client
-	progress    <-chan DownloadProgress
+	progress    chan DownloadProgress
 }
 
 func (r *FileDownloader) GetProgress() <-chan DownloadProgress {
@@ -60,14 +60,13 @@ func NewFileDownloader(ctx context.Context, workerCount int) *FileDownloader {
 		ctx:         ctx,
 		workerCount: workerCount,
 		httpClient:  &http.Client{},
-		progress:    make(<-chan DownloadProgress),
+		progress:    make(chan DownloadProgress),
 	}
 }
 
 // DownloadBatch accepts a slice of jobs, downloads them concurrently up to the worker count,
 // and streams live status updates to the returned channel. It closes the channel when finished.
-func (r *FileDownloader) DownloadBatch(jobs []DownloadJob) <-chan DownloadProgress {
-	progressChan := make(chan DownloadProgress, len(jobs))
+func (r *FileDownloader) DownloadBatch(jobs []DownloadJob) {
 	jobChan := make(chan DownloadJob, len(jobs))
 
 	// Queue up all the jobs
@@ -87,11 +86,11 @@ func (r *FileDownloader) DownloadBatch(jobs []DownloadJob) <-chan DownloadProgre
 			for job := range jobChan {
 				// Check for context cancellation before starting a new job
 				if err := r.ctx.Err(); err != nil {
-					progressChan <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
+					r.progress <- DownloadProgress{URL: job.URL, SavePath: job.SavePrefix, Status: StatusFailed, Err: err}
 					continue
 				}
 
-				r.downloadFile(r.ctx, job, progressChan)
+				r.downloadFile(r.ctx, job)
 			}
 		}()
 	}
@@ -99,35 +98,33 @@ func (r *FileDownloader) DownloadBatch(jobs []DownloadJob) <-chan DownloadProgre
 	// Monitor workers in a separate goroutine to close the progress channel cleanly
 	go func() {
 		wg.Wait()
-		close(progressChan)
+		// close(r.progress)
 	}()
-
-	return progressChan
 }
 
 // downloadFile performs the actual HTTP GET request and file persistence.
-func (fd *FileDownloader) downloadFile(ctx context.Context, job DownloadJob, progress chan<- DownloadProgress) {
-	fmt.Println("downloadFile", job)
-	progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusStarted}
+func (fd *FileDownloader) downloadFile(ctx context.Context, job DownloadJob) {
+	// fmt.Println("downloadFile", job)
+	fd.progress <- DownloadProgress{URL: job.URL, SavePath: job.SavePrefix, Status: StatusStarted}
 
-	// Build the HTTP request to support context cancellation midway
+	// build the HTTP request to support context cancellation midway
 	req, err := http.NewRequestWithContext(ctx, "GET", job.URL, nil)
 	if err != nil {
-		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
+		fd.progress <- DownloadProgress{URL: job.URL, SavePath: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 
 	resp, err := fd.httpClient.Do(req)
 	if err != nil {
-		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
+		fd.progress <- DownloadProgress{URL: job.URL, SavePath: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		progress <- DownloadProgress{
+		fd.progress <- DownloadProgress{
 			URL:      job.URL,
-			SavePath: job.SaveDir,
+			SavePath: job.SavePrefix,
 			Status:   StatusFailed,
 			Err:      fmt.Errorf("bad status code: %d", resp.StatusCode),
 		}
@@ -136,37 +133,42 @@ func (fd *FileDownloader) downloadFile(ctx context.Context, job DownloadJob, pro
 
 	br := bufio.NewReader(resp.Body)
 	if err != nil {
-		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
+		fd.progress <- DownloadProgress{URL: job.URL, SavePath: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 
 	headerBytes, err := br.Peek(512)
 	if err != nil && err != io.EOF {
-		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
+		fd.progress <- DownloadProgress{URL: job.URL, SavePath: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 
 	contentType, ext, err := getTypeAndExtension(&headerBytes)
 	if err != nil {
-		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
+		fd.progress <- DownloadProgress{URL: job.URL, SavePath: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 
-	objectName := fmt.Sprintf("%s%s", job.SaveBaseFilename, ext)
-	fmt.Printf("Target Object Key: '%s'\n", objectName)
+	objectName := fmt.Sprintf("%s%s%s", job.SavePrefix, job.SaveBaseFilename, ext)
+	// fmt.Printf("Target Object Key: '%s'\n", objectName)
+
+	objectTags := map[string]string{
+		"processed": "false",
+	}
 	_, err = services.GetS3Service().PutObject(ctx, config.Config.Seaweed.Bucket, objectName, br, -1, minio.PutObjectOptions{
 		ContentType: contentType,
 		PartSize:    5 * 1024 * 1024, // 5MB internal buffer chunks for dynamic streaming
+		UserTags:    objectTags,
 	})
 
 	if err != nil {
 		fmt.Println("s3 save failed, error:", err, config.Config.Seaweed.Bucket)
-		progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusFailed, Err: err}
+		fd.progress <- DownloadProgress{URL: job.URL, SavePath: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 
-	fmt.Println("s3 save success")
-	progress <- DownloadProgress{URL: job.URL, SavePath: job.SaveDir, Status: StatusCompleted}
+	fmt.Printf("s3 save %s success\n", objectName)
+	fd.progress <- DownloadProgress{URL: job.URL, SavePath: job.SavePrefix, Status: StatusCompleted}
 }
 
 func getTypeAndExtension(header *[]byte) (string, string, error) {
