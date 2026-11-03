@@ -229,6 +229,10 @@ docker exec rmq-dev rabbitmqctl set_permissions -p "${env:RMQ_VHOST}" "${env:DAS
 docker exec rmq-dev rabbitmqctl add_user "${env:DOWNLOADER_RMQ_USER}" "${env:DOWNLOADER_RMQ_PASS}" | Out-Null
 docker exec rmq-dev rabbitmqctl set_permissions -p "${env:RMQ_VHOST}" "${env:DOWNLOADER_RMQ_USER}" "^$" ".*" ".*" | Out-Null
 
+# configure cv application rmq user
+docker exec rmq-dev rabbitmqctl add_user "${env:CV_RMQ_USER}" "${env:CV_RMQ_PASS}" | Out-Null
+docker exec rmq-dev rabbitmqctl set_permissions -p "${env:RMQ_VHOST}" "${env:CV_RMQ_USER}" "^$" ".*" ".*" | Out-Null
+
 Write-Host "[dev] infrastructure provisioning complete. ports are stable." -ForegroundColor Green
 
 # dynamic sleep buffer giving database and messaging daemons a window to initialize listeners
@@ -262,7 +266,7 @@ $concurrentArgs = @(
     "cd services/downloader && go tool air",
     "cd services/dashboard && npm run dev",
     "cd services/dashboard/web-ui && npm run dev",
-    "cd services/cv/ && watchmedo auto-restart --directory=. --pattern=*.py --recursive -- python main.py"
+    "cd services/cv/ && watchmedo auto-restart --directory=. --pattern=*.py --recursive -- .\.venv\Scripts\python.exe main.py"
 )
 
 try {

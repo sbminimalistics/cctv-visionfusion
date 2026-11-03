@@ -32,6 +32,15 @@
       "auto_delete": false,
       "internal": false,
       "arguments": {}
+    },
+    {
+      "name": "downloads.requests.complete",
+      "vhost": "cctv-vf",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
     }
   ],
   "queues": [
@@ -69,7 +78,7 @@
       }
     },
     {
-      "name": "image_refs",
+      "name": "pictures_feed",
       "vhost": "cctv-vf",
       "durable": true,
       "auto_delete": false,
@@ -101,6 +110,14 @@
       "source": "requests.download.screenshot",
       "vhost": "cctv-vf",
       "destination": "downloader_feed",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    },
+    {
+      "source": "downloads.requests.complete",
+      "vhost": "cctv-vf",
+      "destination": "pictures_feed",
       "destination_type": "queue",
       "routing_key": "#",
       "arguments": {}
