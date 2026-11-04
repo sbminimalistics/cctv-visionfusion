@@ -23,7 +23,7 @@ func TestGetDownloadLinkService(t *testing.T) {
 func Test_DownloadLinkService_Lifecycle(t *testing.T) {
 	testURL := "https://example.com"
 	testDestPath := "/directory"
-	testDestBaseFileName := "file0"
+	eventUUID, _ := uuid.NewV7()
 
 	ctx := t.Context()
 
@@ -34,7 +34,7 @@ func Test_DownloadLinkService_Lifecycle(t *testing.T) {
 	var token uuid.UUID
 
 	t.Run("create new token", func(t *testing.T) {
-		token_, expiresAt, err := service.GetNewToken(testURL, testDestPath, testDestBaseFileName)
+		token_, expiresAt, err := service.GetNewToken(testURL, testDestPath, eventUUID)
 
 		token = token_
 
@@ -62,7 +62,7 @@ func Test_DownloadLinkService_Lifecycle(t *testing.T) {
 			t.Error("expected to get the same destination path provided during token creation")
 		}
 
-		if link.GetDestinationBaseFileName() != testDestBaseFileName {
+		if link.GetEventUUID() != eventUUID {
 			t.Error("expected to get the same destination base file name provided during token creation")
 		}
 	})

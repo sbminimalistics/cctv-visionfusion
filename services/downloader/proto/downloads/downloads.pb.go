@@ -90,6 +90,82 @@ func (x *DownloadInstruction) GetRedeemPath() string {
 	return ""
 }
 
+type DownloadCompleteEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventUuid     string                 `protobuf:"bytes,1,opt,name=event_uuid,json=eventUuid,proto3" json:"event_uuid,omitempty"`
+	Prefix        string                 `protobuf:"bytes,2,opt,name=prefix,proto3" json:"prefix,omitempty"`
+	ObjectName    string                 `protobuf:"bytes,3,opt,name=object_name,json=objectName,proto3" json:"object_name,omitempty"`
+	ContentType   string                 `protobuf:"bytes,4,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	Extension     string                 `protobuf:"bytes,5,opt,name=extension,proto3" json:"extension,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DownloadCompleteEvent) Reset() {
+	*x = DownloadCompleteEvent{}
+	mi := &file_downloads_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DownloadCompleteEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DownloadCompleteEvent) ProtoMessage() {}
+
+func (x *DownloadCompleteEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_downloads_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DownloadCompleteEvent.ProtoReflect.Descriptor instead.
+func (*DownloadCompleteEvent) Descriptor() ([]byte, []int) {
+	return file_downloads_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *DownloadCompleteEvent) GetEventUuid() string {
+	if x != nil {
+		return x.EventUuid
+	}
+	return ""
+}
+
+func (x *DownloadCompleteEvent) GetPrefix() string {
+	if x != nil {
+		return x.Prefix
+	}
+	return ""
+}
+
+func (x *DownloadCompleteEvent) GetObjectName() string {
+	if x != nil {
+		return x.ObjectName
+	}
+	return ""
+}
+
+func (x *DownloadCompleteEvent) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+func (x *DownloadCompleteEvent) GetExtension() string {
+	if x != nil {
+		return x.Extension
+	}
+	return ""
+}
+
 var File_downloads_proto protoreflect.FileDescriptor
 
 const file_downloads_proto_rawDesc = "" +
@@ -101,7 +177,15 @@ const file_downloads_proto_rawDesc = "" +
 	"\x05token\x18\x02 \x01(\tR\x05token\x12=\n" +
 	"\ftoken_expiry\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vtokenExpiry\x12\x1f\n" +
 	"\vredeem_path\x18\x04 \x01(\tR\n" +
-	"redeemPathB\fZ\n" +
+	"redeemPath\"\xb0\x01\n" +
+	"\x15DownloadCompleteEvent\x12\x1d\n" +
+	"\n" +
+	"event_uuid\x18\x01 \x01(\tR\teventUuid\x12\x16\n" +
+	"\x06prefix\x18\x02 \x01(\tR\x06prefix\x12\x1f\n" +
+	"\vobject_name\x18\x03 \x01(\tR\n" +
+	"objectName\x12!\n" +
+	"\fcontent_type\x18\x04 \x01(\tR\vcontentType\x12\x1c\n" +
+	"\textension\x18\x05 \x01(\tR\textensionB\fZ\n" +
 	"/downloadsb\x06proto3"
 
 var (
@@ -116,14 +200,15 @@ func file_downloads_proto_rawDescGZIP() []byte {
 	return file_downloads_proto_rawDescData
 }
 
-var file_downloads_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_downloads_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_downloads_proto_goTypes = []any{
 	(*DownloadInstruction)(nil),   // 0: cctv_vf.DownloadInstruction
-	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
+	(*DownloadCompleteEvent)(nil), // 1: cctv_vf.DownloadCompleteEvent
+	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 }
 var file_downloads_proto_depIdxs = []int32{
-	1, // 0: cctv_vf.DownloadInstruction.event_time:type_name -> google.protobuf.Timestamp
-	1, // 1: cctv_vf.DownloadInstruction.token_expiry:type_name -> google.protobuf.Timestamp
+	2, // 0: cctv_vf.DownloadInstruction.event_time:type_name -> google.protobuf.Timestamp
+	2, // 1: cctv_vf.DownloadInstruction.token_expiry:type_name -> google.protobuf.Timestamp
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -142,7 +227,7 @@ func file_downloads_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_downloads_proto_rawDesc), len(file_downloads_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

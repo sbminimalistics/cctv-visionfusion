@@ -15,12 +15,12 @@ var (
 )
 
 type LinkWithExpiry struct {
-	token                   uuid.UUID
-	createdAt               time.Time
-	expiresAt               time.Time
-	url                     string
-	destinationPath         string
-	destinationBaseFileName string
+	token           uuid.UUID
+	createdAt       time.Time
+	expiresAt       time.Time
+	url             string
+	destinationPath string
+	eventUUID       uuid.UUID
 }
 
 func (r *LinkWithExpiry) GetToken() uuid.UUID {
@@ -43,8 +43,8 @@ func (r *LinkWithExpiry) GetDestinationPath() string {
 	return r.destinationPath
 }
 
-func (r *LinkWithExpiry) GetDestinationBaseFileName() string {
-	return r.destinationBaseFileName
+func (r *LinkWithExpiry) GetEventUUID() uuid.UUID {
+	return r.eventUUID
 }
 
 type DownloadLinkService struct {
@@ -67,7 +67,7 @@ func (r *DownloadLinkService) GetLink(token uuid.UUID) (LinkWithExpiry, bool) {
 	return LinkWithExpiry{}, false
 }
 
-func (r *DownloadLinkService) GetNewToken(url, destPath, destBaseFileName string) (uuid.UUID, time.Time, error) {
+func (r *DownloadLinkService) GetNewToken(url, destPath string, eventUUID uuid.UUID) (uuid.UUID, time.Time, error) {
 	now := time.Now().UTC()
 	id, err := uuid.NewV7()
 
@@ -76,12 +76,12 @@ func (r *DownloadLinkService) GetNewToken(url, destPath, destBaseFileName string
 	}
 
 	link := LinkWithExpiry{
-		token:                   id,
-		createdAt:               now,
-		expiresAt:               now.Add(DefaultLinkTTL),
-		url:                     url,
-		destinationPath:         destPath,
-		destinationBaseFileName: destBaseFileName,
+		token:           id,
+		createdAt:       now,
+		expiresAt:       now.Add(DefaultLinkTTL),
+		url:             url,
+		destinationPath: destPath,
+		eventUUID:       eventUUID,
 	}
 
 	r.links = append(r.links, link)

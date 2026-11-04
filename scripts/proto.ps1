@@ -18,6 +18,9 @@ if (-not (Test-Path -Path "services/downloader/proto")) {
 if (-not (Test-Path -Path "services/dashboard/proto")) {
     New-Item -ItemType Directory -Path "services/dashboard/proto"
 }
+if (-not (Test-Path -Path "services/cv/proto")) {
+    New-Item -ItemType Directory -Path "services/cv/proto"
+}
 
 $IncludeCacheDir = Join-Path WorkspaceRoot ".proto_include\google\protobuf"
 if (-not (Test-Path -Path \$IncludeCacheDir)) {
@@ -35,4 +38,5 @@ protoc `
 --plugin=protoc-gen-ts_proto="${projectRootDirForward}/services/dashboard/node_modules/.bin/protoc-gen-ts_proto.cmd" `
 --ts_proto_out="${projectRootDirForward}/services/dashboard/proto" `
 --ts_proto_opt=env=node,esModuleInterop=true `
+--python_out=services/cv/proto `
 proto/*.proto

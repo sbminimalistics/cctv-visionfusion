@@ -86,9 +86,12 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 					comp.TrackEvent(ev)
 				}
 				routingKey := strings.Join([]string{"device.", ev.DeviceID, ".event"}, "")
+				// fmt.Println("<- event type:", ev.Parsed.GetEventType())
 				for _, route := range routing {
 					re := route.Source.EventTypeRegexp.Regexp
-					if route.Source.SourceID == ev.DeviceID && re.MatchString(ev.Parsed.GetEventType()) {
+					match := re.MatchString(ev.Parsed.GetEventType())
+					// fmt.Println("cmp regexp", re.String(), "match?", match)
+					if route.Source.SourceID == ev.DeviceID && match {
 						deviceEvent := mappers.DeviceEventToProto(ev)
 						bytes, err := proto.Marshal(deviceEvent)
 						if err != nil {
@@ -102,7 +105,7 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 				token, expiry, err := services.GetDownloadLinkService().GetNewToken(
 					ev.GetAbsolutePicturePath(),
 					fmt.Sprintf("%s/%d/%d", ev.DeviceID, now.Year(), now.Month()),
-					ev.GetUUID().String(),
+					ev.GetUUID(),
 				)
 
 				if err != nil {

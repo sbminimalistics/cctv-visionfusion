@@ -19,6 +19,14 @@ export interface DownloadInstruction {
   redeemPath: string;
 }
 
+export interface DownloadCompleteEvent {
+  eventUuid: string;
+  prefix: string;
+  objectName: string;
+  contentType: string;
+  extension: string;
+}
+
 function createBaseDownloadInstruction(): DownloadInstruction {
   return { eventTime: undefined, token: "", tokenExpiry: undefined, redeemPath: "" };
 }
@@ -144,6 +152,151 @@ export const DownloadInstruction: MessageFns<DownloadInstruction> = {
     message.token = object.token ?? "";
     message.tokenExpiry = object.tokenExpiry ?? undefined;
     message.redeemPath = object.redeemPath ?? "";
+    return message;
+  },
+};
+
+function createBaseDownloadCompleteEvent(): DownloadCompleteEvent {
+  return { eventUuid: "", prefix: "", objectName: "", contentType: "", extension: "" };
+}
+
+export const DownloadCompleteEvent: MessageFns<DownloadCompleteEvent> = {
+  encode(message: DownloadCompleteEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.eventUuid !== "") {
+      writer.uint32(10).string(message.eventUuid);
+    }
+    if (message.prefix !== "") {
+      writer.uint32(18).string(message.prefix);
+    }
+    if (message.objectName !== "") {
+      writer.uint32(26).string(message.objectName);
+    }
+    if (message.contentType !== "") {
+      writer.uint32(34).string(message.contentType);
+    }
+    if (message.extension !== "") {
+      writer.uint32(42).string(message.extension);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DownloadCompleteEvent {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseDownloadCompleteEvent();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.eventUuid = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
+
+            message.prefix = reader.string();
+            continue;
+          }
+          case 3: {
+            if (tag !== 26) {
+              break;
+            }
+
+            message.objectName = reader.string();
+            continue;
+          }
+          case 4: {
+            if (tag !== 34) {
+              break;
+            }
+
+            message.contentType = reader.string();
+            continue;
+          }
+          case 5: {
+            if (tag !== 42) {
+              break;
+            }
+
+            message.extension = reader.string();
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
+
+  fromJSON(object: any): DownloadCompleteEvent {
+    return {
+      eventUuid: isSet(object.eventUuid)
+        ? globalThis.String(object.eventUuid)
+        : isSet(object.event_uuid)
+        ? globalThis.String(object.event_uuid)
+        : "",
+      prefix: isSet(object.prefix) ? globalThis.String(object.prefix) : "",
+      objectName: isSet(object.objectName)
+        ? globalThis.String(object.objectName)
+        : isSet(object.object_name)
+        ? globalThis.String(object.object_name)
+        : "",
+      contentType: isSet(object.contentType)
+        ? globalThis.String(object.contentType)
+        : isSet(object.content_type)
+        ? globalThis.String(object.content_type)
+        : "",
+      extension: isSet(object.extension) ? globalThis.String(object.extension) : "",
+    };
+  },
+
+  toJSON(message: DownloadCompleteEvent): unknown {
+    const obj: any = {};
+    if (message.eventUuid !== "") {
+      obj.eventUuid = message.eventUuid;
+    }
+    if (message.prefix !== "") {
+      obj.prefix = message.prefix;
+    }
+    if (message.objectName !== "") {
+      obj.objectName = message.objectName;
+    }
+    if (message.contentType !== "") {
+      obj.contentType = message.contentType;
+    }
+    if (message.extension !== "") {
+      obj.extension = message.extension;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DownloadCompleteEvent>, I>>(base?: I): DownloadCompleteEvent {
+    return DownloadCompleteEvent.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<DownloadCompleteEvent>, I>>(object: I): DownloadCompleteEvent {
+    const message = createBaseDownloadCompleteEvent();
+    message.eventUuid = object.eventUuid ?? "";
+    message.prefix = object.prefix ?? "";
+    message.objectName = object.objectName ?? "";
+    message.contentType = object.contentType ?? "";
+    message.extension = object.extension ?? "";
     return message;
   },
 };

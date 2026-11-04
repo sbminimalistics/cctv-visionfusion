@@ -20,9 +20,9 @@ type RedeemVoucher struct {
 }
 
 type RedeemVoucherResponse struct {
-	PictureURL              string `json:"picture_url"`
-	DestinationPath         string `json:"destination_path"`
-	DestinationBaseFilename string `json:"destination_base_filename"`
+	PictureURL      string    `json:"picture_url"`
+	DestinationPath string    `json:"destination_path"`
+	EventUUID       uuid.UUID `json:"event_uuid"`
 }
 
 func redeemHandler(w http.ResponseWriter, r *http.Request) {
@@ -50,9 +50,9 @@ func redeemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := RedeemVoucherResponse{
-		PictureURL:              link.GetURL(),
-		DestinationPath:         link.GetDestinationPath(),
-		DestinationBaseFilename: link.GetDestinationBaseFileName(),
+		PictureURL:      link.GetURL(),
+		DestinationPath: link.GetDestinationPath(),
+		EventUUID:       link.GetEventUUID(),
 	}
 
 	contents, err := json.Marshal(&resp)

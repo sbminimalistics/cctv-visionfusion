@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/google/uuid"
+
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/config"
 )
 
@@ -17,9 +19,9 @@ type RequestPacket struct {
 }
 
 type ResponsePacket struct {
-	PictureURL              string `json:"picture_url"`
-	DestinationPath         string `json:"destination_path"`
-	DestinationBaseFilename string `json:"destination_base_filename"`
+	PictureURL      string    `json:"picture_url"`
+	DestinationPath string    `json:"destination_path"`
+	EventUUID       uuid.UUID `json:"event_uuid"`
 }
 
 func ExchangeToken(apiEndpoint string, token string) (ResponsePacket, error) {

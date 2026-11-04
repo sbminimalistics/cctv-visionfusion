@@ -267,7 +267,7 @@ $concurrentArgs = @(
     "cd services/downloader && go tool air",
     "cd services/dashboard && npm run dev",
     "cd services/dashboard/web-ui && npm run dev",
-    "cd services/cv/ && watchmedo auto-restart --directory=. --pattern=*.py --recursive -- .\.venv\Scripts\python.exe main.py"
+    "cd services/cv/ && .venv\\Scripts\\watchmedo.exe auto-restart --directory=. --pattern=*.py --recursive -- .\.venv\Scripts\python.exe main.py"
 )
 
 try {

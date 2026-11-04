@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/downloader"
+	"sbminimalistics.com/cctv-visionfusion/downloader/internal/mappers"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/messaging"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/services"
 	"sbminimalistics.com/cctv-visionfusion/downloader/proto/downloads"
@@ -80,9 +81,10 @@ func main() {
 						) + "/"
 						dl.DownloadBatch([]downloader.DownloadJob{
 							{
+								EventUUID:        data.EventUUID,
 								URL:              data.PictureURL,
 								SavePrefix:       savePrefix,
-								SaveBaseFilename: data.DestinationBaseFilename,
+								SaveBaseFilename: data.EventUUID.String(),
 							},
 						})
 					}
@@ -98,14 +100,29 @@ downloaderProgressLoop:
 		select {
 		case <-ctx.Done():
 			break downloaderProgressLoop
+
 		case update := <-progress:
 			switch update.Status {
 			case downloader.StatusStarted:
-				fmt.Printf("started downloading: %s\n", update.URL)
+				fmt.Printf("started downloading: %s\n", update.EventUUID)
+
 			case downloader.StatusCompleted:
-				fmt.Printf("finished downloading: %s saved to %s\n", update.URL, update.SavePath)
+				fmt.Printf("finished downloading: %s saved to %s\n", update.EventUUID, update.SavePrefix)
+
+				msg := mappers.DownloadProgressToProto(update)
+				bytes, _ := proto.Marshal(msg)
+
+				err := rmqClient.Publish(ctx,
+					"downloads.requests.complete",
+					"downloads.complete",
+					bytes,
+				)
+				if err != nil {
+					fmt.Println("message publication failed:", err)
+				}
+
 			case downloader.StatusFailed:
-				fmt.Printf("failed downloading %s: %v\n", update.URL, update.Err)
+				fmt.Printf("failed downloading %s: %v\n", update.EventUUID, update.Err)
 			}
 		}
 	}

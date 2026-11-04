@@ -92,10 +92,10 @@ func (r *RMQClient) Publish(ctx context.Context, exchangeName, routingKey string
 	}
 
 	err := r.ch.PublishWithContext(ctx,
-		exchangeName, // Exchange name string
-		routingKey,   // Target queue routing identifier
-		false,        // Mandatory flag
-		false,        // Immediate flag
+		exchangeName, // exchange name string
+		routingKey,   // target queue routing identifier
+		false,        // mandatory flag
+		false,        // immediate flag
 		amqp.Publishing{
 			ContentType:  "application/json",
 			DeliveryMode: amqp.Persistent, // Forces message persistence across broker restarts

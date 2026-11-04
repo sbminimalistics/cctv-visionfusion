@@ -35,3 +35,6 @@ config.yml
 services/backend/cctv-visionfusion-backend-app
 
 downloads
+
+services/cv/__pycache__
+services/cv/models

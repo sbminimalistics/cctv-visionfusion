@@ -13,3 +13,11 @@ message DownloadInstruction {
     google.protobuf.Timestamp token_expiry = 3;
     string redeem_path = 4;
 }
+
+message DownloadCompleteEvent {
+    string event_uuid = 1;
+    string prefix = 2;
+    string object_name = 3;
+    string content_type = 4;
+    string extension = 5;
+}
