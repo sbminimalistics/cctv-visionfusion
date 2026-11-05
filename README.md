@@ -19,7 +19,7 @@ To compile the Protocol Buffer schemas or run services locally, you require:
 
 * **Container Infrastructure:** Docker Engine
 * **Go Ecosystem:** Go 1.26.2+ and the `protoc-gen-go` binary plugin
-* **Python Ecosystem:** Python 3.15+ and `uv` or `pip` package manager
+* **Python Ecosystem:** Python 3.14 and `uv` or `pip` package manager
 * **Node.js Ecosystem:** Node.js 24.16.0+ (LTS)
 * **Schema Compiler:** Protocol Buffers Compiler (`protoc` v25+) mapped to your system PATH
 
