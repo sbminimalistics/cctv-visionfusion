@@ -23,7 +23,7 @@ class YOLODetector:
         if not os.path.exists(self.model_path):
             print(f"critical error: model file not found at {self.model_path}")
             sys.exit(1)
-            
+
         if not os.path.exists(self.model_names_path):
             print(f"critical error: names config file not found at {self.model_names_path}")
             sys.exit(1)
