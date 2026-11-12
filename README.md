@@ -1,5 +1,6 @@
 ![backend Test Status](https://github.com/sbminimalistics/cctv-visionfusion/actions/workflows/backend-go-test.yml/badge.svg)
 
+![cbackend Build Status](https://github.com/sbminimalistics/cctv-visionfusion/actions/workflows/build-backend.yml/badge.svg)
 ![cv Build Status](https://github.com/sbminimalistics/cctv-visionfusion/actions/workflows/build-cv.yml/badge.svg)
 
 # CCTV VisionFusion

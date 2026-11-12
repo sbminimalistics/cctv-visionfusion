@@ -37,7 +37,7 @@ jobs:
             type=sha,format=short
             latest
 
-      - name: Build and push CV Docker image
+      - name: Build and push cv Docker image
         uses: docker/build-push-action@v7
         with:
           context: ./services/cv

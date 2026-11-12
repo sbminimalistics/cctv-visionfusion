@@ -11,7 +11,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}/backend
 
 jobs:
-  build-cv:
+  build-backend:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,10 +37,10 @@ jobs:
             type=sha,format=short
             latest
 
-      - name: Build and push CV Docker image
+      - name: Build and push backend Docker image
         uses: docker/build-push-action@v7
         with:
-          context: ./services/cv
+          context: ./services/backend
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
