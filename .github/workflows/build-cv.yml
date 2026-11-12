@@ -1,4 +1,4 @@
-name: services/cv image build
+name: services/cv build
 
 on:
   push:
