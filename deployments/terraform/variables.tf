@@ -135,6 +135,18 @@ variable "downloader_rmq_pass" {
   description = "Password for downloader service"
 }
 
+variable "cv_rmq_user" {
+  type        = string
+  description = "Username for cv service"
+  default     = "cv_rmq"
+}
+
+variable "cv_rmq_pass" {
+  type        = string
+  sensitive   = true
+  description = "Password for cv service"
+}
+
 variable "rmq_queue_dashboard_feed" {
   type        = string
   default     = "dashboard_feed"
@@ -143,6 +155,11 @@ variable "rmq_queue_dashboard_feed" {
 variable "rmq_queue_dashboard_triggers" {
   type        = string
   default     = "dashboard_triggers"
+}
+
+variable "rmq_queue_cv_feed" {
+  type        = string
+  default     = "image_refs"
 }
 
 variable "seaweed_host" {
@@ -221,4 +238,16 @@ variable "seaweed_cv_pass" {
   type        = string
   sensitive   = true
   description = "Password for cv service"
+}
+
+variable "cv_model_path" {
+  type        = string
+  description = "Path to object detection model file"
+  default     = "models/yolov10s.onnx"
+}
+
+variable "cv_model_names_path" {
+  type        = string
+  description = "Path to object detection names file"
+  default     = "models/coco.names"
 }

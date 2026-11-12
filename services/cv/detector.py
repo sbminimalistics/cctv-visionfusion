@@ -8,28 +8,28 @@ import onnxruntime as ort
 
 class YOLODetector:
     """Universal detector configured for explicit manual toggling between YOLOv10
-
     (with coco.names) and YOLO26 (with config.json).
     """
 
-    def __init__(self):
-        self.model_path = os.getenv("CV_MODEL_PATH")
-        self.model_names_path = os.getenv("CV_MODEL_NAMES_PATH")
+    def __init__(self, model_path: str, model_names_path: str, confidence_threshold: float):
+        self.model_path = model_path
+        self.model_names_path = model_names_path
+        self.confidence_threshold = confidence_threshold
 
         if not self.model_path or not self.model_names_path:
-            print("critical error: CV_MODEL_PATH or CV_MODEL_NAMES_PATH env variables are not set.")
+            print("critical error: CV_MODEL_PATH or CV_MODEL_NAMES_PATH env variables are not set.", flush=True)
             sys.exit(1)
 
         if not os.path.exists(self.model_path):
-            print(f"critical error: model file not found at {self.model_path}")
+            print(f"critical error: model file not found at {self.model_path}", flush=True)
             sys.exit(1)
 
         if not os.path.exists(self.model_names_path):
-            print(f"critical error: names config file not found at {self.model_names_path}")
+            print(f"critical error: names config file not found at {self.model_names_path}", flush=True)
             sys.exit(1)
 
-        print(f"loading unified model: {self.model_path}")
-        print(f"loading target names map: {self.model_names_path}")
+        print(f"loading unified model: {self.model_path}", flush=True)
+        print(f"loading target names map: {self.model_names_path}", flush=True)
 
         # dynamically parse labels based on the file type (.json vs standard text list)
         self.names = {}
@@ -53,11 +53,14 @@ class YOLODetector:
         self.input_name = self.session.get_inputs()[0].name
         self.output_names = [out.name for out in self.session.get_outputs()]
 
-    def detect(self, frame: np.ndarray, confidence_threshold: float = 0.5) -> list:
+    def detect(self, frame: np.ndarray, confidence_threshold: float | None = None) -> list:
         """Runs object detection on the provided frame, adapting structure dynamically
-
         based on how the ONNX graph builds its output nodes.
         """
+
+        if confidence_threshold is None:
+            confidence_threshold = self.confidence_threshold
+
         orig_h, orig_w = frame.shape[:2]
 
         # preprocessing: Resize to match the 640x640 static graph constraint

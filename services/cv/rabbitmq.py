@@ -1,20 +1,17 @@
-import os
 import time
 import pika
 
 
-class RabbitMQConsumer:
+class RabbitMQClient:
     """Manages connection, channel registration, and listening to RabbitMQ."""
 
-    def __init__(self, message_callback):
-        self.host = os.getenv('RMQ_HOST', 'localhost')
-        self.port = os.getenv('RMQ_PORT', '5672')
-        self.vhost = os.getenv('RMQ_VHOST', 'cctv-vf')
-        self.user = os.getenv('CV_RMQ_USER', 'a')
-        self.password = os.getenv('CV_RMQ_PASS', 'b')
-        self.queue = os.getenv('RMQ_QUEUE_CV_FEED', 'image_refs')
-
-        self.on_message_received = message_callback
+    def __init__(self, host: str, port: str, vhost: str, user: str, password: str, queue: str):
+        self.host = host
+        self.port = port
+        self.vhost = vhost
+        self.user = user
+        self.password = password
+        self.queue = queue
 
         self.connection = None
         self.channel = None
@@ -45,12 +42,13 @@ class RabbitMQConsumer:
             # acknowledge completion back to RMQ
             ch.basic_ack(delivery_tag=method.delivery_tag)
         except Exception as e:
-            print(f"[RMQ Consumer] Execution error, rejecting message: {e}")
+            print(f"execution error, rejecting message: {e}")
             # reject message and put it back in queue for a retry
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
-    def start_consuming(self):
+    def start_listening(self, callback):
         """Blocks and listens for incoming queue payloads."""
+        self.on_message_received = callback
         print(f"Waiting for messages in queue: '{self.queue}'")
         self.channel.basic_consume(
             queue=self.queue, on_message_callback=self._internal_callback

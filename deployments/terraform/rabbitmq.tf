@@ -95,7 +95,11 @@ resource "terraform_data" "rabbitmq_provisioning" {
 
       "docker exec rabbitmq-broker rabbitmqctl delete_user \"${var.dashboard_rmq_user}\" || true",
       "docker exec rabbitmq-broker rabbitmqctl add_user \"${var.dashboard_rmq_user}\" \"${var.dashboard_rmq_pass}\"",
-      "docker exec rabbitmq-broker rabbitmqctl set_permissions -p cctv-vf \"${var.dashboard_rmq_user}\" \"^\\$\" \"^\\$\" \".*\""
+      "docker exec rabbitmq-broker rabbitmqctl set_permissions -p cctv-vf \"${var.dashboard_rmq_user}\" \"^\\$\" \"^\\$\" \".*\"",
+
+      "docker exec rabbitmq-broker rabbitmqctl delete_user \"${var.cv_rmq_user}\" || true",
+      "docker exec rabbitmq-broker rabbitmqctl add_user \"${var.cv_rmq_user}\" \"${var.cv_rmq_pass}\"",
+      "docker exec rabbitmq-broker rabbitmqctl set_permissions -p cctv-vf \"${var.cv_rmq_user}\" \"^\\$\" \".*\" \".*\""
     ]
   }
 }

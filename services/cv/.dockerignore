@@ -1,0 +1,18 @@
+# ignore python virtual environments
+.venv/
+venv/
+env/
+
+# ignore local python caches
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ignore local models
+# models/
+
+# ignore IDE files and git configuration
+.git/
+.vscode/
+.idea/

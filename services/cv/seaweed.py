@@ -6,13 +6,13 @@ from botocore.config import Config
 class SeaweedClient:
     """Manages the lifecycle and operations for the SeaweedFS S3 API endpoint."""
 
-    def __init__(self):
-        self.host = os.getenv("SEAWEED_HOST", "localhost")
-        self.port = os.getenv("SEAWEED_API_PORT", "8333")
+    def __init__(self, host: str, port: str, access_key: str, secret_key: str, default_bucket: str):
+        self.host = host
+        self.port = port
         self.endpoint_url = f"http://{self.host}:{self.port}"
-        self.access_key = os.getenv("CV_SEAWEED_USER", "a")
-        self.secret_key = os.getenv("CV_SEAWEED_PASS", "any_secret_if_unconfigured")
-        self.default_bucket = os.getenv("SEAWEED_BUCKET", "downloads")
+        self.access_key = access_key
+        self.secret_key = secret_key
+        self.default_bucket = default_bucket
 
         self.client = boto3.client(
             "s3",
