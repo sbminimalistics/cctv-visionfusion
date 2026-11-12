@@ -53,7 +53,7 @@ jobs:
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           jq --arg sha "$SHORT_SHA" '.backend_image_tag = $sha' deployments/terraform/versions.auto.tfvars.json > tmp.json
-          mv tmp.json terraform/versions.auto.tfvars.json
+          mv tmp.json deployments/terraform/versions.auto.tfvars.json
 
       - name: Commit updated Terraform variable
         run: |
