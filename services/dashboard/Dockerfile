@@ -14,7 +14,7 @@ RUN npm ci
 # COPY tsconfig.json ./
 COPY src/ ./src/
 COPY proto/ ./proto/
-COPY public/ ./public/
+COPY public/* ./public/
 
 # compile typescript to javascript
 RUN npm run build

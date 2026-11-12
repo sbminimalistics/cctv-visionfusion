@@ -3,9 +3,9 @@ RUN apk --no-cache add ca-certificates tzdata
 
 WORKDIR /app/
 
-COPY /cmd ./cmd
-COPY /internal ./internal
-COPY /proto ./proto
+COPY cmd/ ./cmd/
+COPY internal/ ./internal/
+COPY proto/ ./proto/
 COPY go.mod ./go.mod
 COPY go.sum ./go.sum
 
