@@ -1,3 +1,5 @@
+name: services/cv image build
+
 on:
   push:
     paths:
