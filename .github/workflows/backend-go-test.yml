@@ -3,8 +3,8 @@ name: backend Go Test
 on:
   push:
     paths:
-      - 'services/backend/**'
-      - '.github/workflows/backend-go-test.yml'
+      - "services/backend/**"
+      - ".github/workflows/backend-go-test.yml"
 
 jobs:
   test:
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'services/backend/go.mod'
+          go-version-file: "services/backend/go.mod"
 
       - name: Run tests
         working-directory: services/backend

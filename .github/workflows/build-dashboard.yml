@@ -3,8 +3,8 @@ name: services/dashboard build
 on:
   push:
     paths:
-      - 'services/dashboard/**'
-      - '.github/workflows/build-dashboard.yml'
+      - "services/dashboard/**"
+      - ".github/workflows/build-dashboard.yml"
 
 env:
   REGISTRY: ghcr.io
@@ -52,15 +52,15 @@ jobs:
 
       - name: Update and commit image tag to Terraform vars
         run: |
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-            git pull --rebase
+          git pull --rebase
 
-            jq --arg sha "$SHORT_SHA" '.dashboard_image_tag = $sha' deployments/terraform/versions.auto.tfvars.json > tmp.json
-            mv tmp.json deployments/terraform/versions.auto.tfvars.json
+          jq --arg sha "$SHORT_SHA" '.dashboard_image_tag = $sha' deployments/terraform/versions.auto.tfvars.json > tmp.json
+          mv tmp.json deployments/terraform/versions.auto.tfvars.json
 
-            git add deployments/terraform/versions.auto.tfvars.json
-            git commit -m "chore(terraform): bump dashboard image to $(git rev-parse --short HEAD) [skip ci]"
-            git push
+          git add deployments/terraform/versions.auto.tfvars.json
+          git commit -m "chore(terraform): bump dashboard image to $(git rev-parse --short HEAD) [skip ci]"
+          git push
