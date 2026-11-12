@@ -26,6 +26,9 @@ crash.log
 # local configurations
 config.yml
 
+# public ip configurations
+config_public_ip.yml
+
 **/tmp/
 
 .env_dev
