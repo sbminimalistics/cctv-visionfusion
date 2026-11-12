@@ -6,6 +6,8 @@
 *.tfvars
 *.tfvars.json
 
+!versions.auto.tfvars.json
+
 # terraform infrastructure mapping details
 *.tfstate
 *.tfstate.backup

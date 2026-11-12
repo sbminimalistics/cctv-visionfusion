@@ -1,3 +1,13 @@
+variable "backend_image_tag" {
+  type        = string
+  description = "Git commit SHA tag for the backend service Docker image"
+}
+
+variable "cv_image_tag" {
+  type        = string
+  description = "Git commit SHA tag for the cv service Docker image"
+}
+
 variable "remote_ubuntu_ip" {
   type        = string
   description = "remote machine IP"
