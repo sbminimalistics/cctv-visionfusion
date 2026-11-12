@@ -1,0 +1,62 @@
+name: services/downloader build
+
+on:
+  push:
+    paths:
+      - 'services/downloader/**'
+      - '.github/workflows/build-downloader.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/downloader
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-downloader:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=short
+            latest
+
+      - name: Build and push downloader Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./services/downloader
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Update and commit image tag to Terraform vars
+        run: |
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            git pull --rebase
+
+            jq --arg sha "$SHORT_SHA" '.downloader_image_tag = $sha' deployments/terraform/versions.auto.tfvars.json > tmp.json
+            mv tmp.json deployments/terraform/versions.auto.tfvars.json
+
+            git add deployments/terraform/versions.auto.tfvars.json
+            git commit -m "chore(terraform): bump downloader image to $(git rev-parse --short HEAD) [skip ci]"
+            git push

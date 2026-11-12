@@ -8,6 +8,16 @@ variable "cv_image_tag" {
   description = "Git commit SHA tag for the cv service Docker image"
 }
 
+variable "dashboard_image_tag" {
+  type        = string
+  description = "Git commit SHA tag for the dashboard service Docker image"
+}
+
+variable "downloader_image_tag" {
+  type        = string
+  description = "Git commit SHA tag for the downloader service Docker image"
+}
+
 variable "remote_ubuntu_ip" {
   type        = string
   description = "remote machine IP"
