@@ -54,7 +54,7 @@ func NewSSEListener(cfg config.EdgeDeviceConfig, parser PacketParser) *SSEListen
 }
 
 func (r *SSEListener) ConnectAndRetryForever(ctx context.Context, deviceConfig config.EdgeDeviceConfig) {
-	url := fmt.Sprintf("http://%s/ISAPI/Event/notification/alertStream", deviceConfig.Host)
+	url := fmt.Sprintf("http://%s:%d/ISAPI/Event/notification/alertStream", deviceConfig.Host, deviceConfig.Port)
 	username := deviceConfig.User
 	password := deviceConfig.Password
 
