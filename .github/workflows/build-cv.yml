@@ -1,65 +1,65 @@
 name: services/cv build
 
 on:
-  push:
-    paths:
-      - 'services/cv/**'
-      - '.github/workflows/build-cv.yml'
+    push:
+        paths:
+            - "services/cv/**"
+            - ".github/workflows/build-cv.yml"
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/cv
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}/cv
 
 permissions:
-  contents: write
-  packages: write
+    contents: write
+    packages: write
 
 jobs:
-  build-cv:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    build-cv:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Log in to GitHub Container Registry
+              uses: docker/login-action@v4
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,format=short
-            latest
+            - name: Extract metadata (tags, labels)
+              id: meta
+              uses: docker/metadata-action@v6
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=sha,format=short
+                      latest
 
-      - name: Build and push cv Docker image
-        uses: docker/build-push-action@v7
-        with:
-          context: ./services/cv
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+            - name: Build and push cv Docker image
+              uses: docker/build-push-action@v7
+              with:
+                  context: ./services/cv
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Update Terraform image tag
-        run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          jq --arg sha "$SHORT_SHA" '.cv_image_tag = $sha' deployments/terraform/versions.auto.tfvars.json > tmp.json
-          mv tmp.json deployments/terraform/versions.auto.tfvars.json
+            - name: Update and commit image tag to Terraform vars
+              run: |
+                  SHORT_SHA=$(git rev-parse --short HEAD)
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit updated Terraform variable
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add deployments/terraform/versions.auto.tfvars.json
-          git commit -m "chore(terraform): bump cv image to $(git rev-parse --short HEAD) [skip ci]"
-          git pull --rebase
-          git push
+                  git pull --rebase
+
+                  jq --arg sha "$SHORT_SHA" '.cv_image_tag = $sha' deployments/terraform/versions.auto.tfvars.json > tmp.json
+                  mv tmp.json deployments/terraform/versions.auto.tfvars.json
+
+                  git add deployments/terraform/versions.auto.tfvars.json
+                  git commit -m "chore(terraform): bump cv image to $(git rev-parse --short HEAD) [skip ci]"
+                  git push
