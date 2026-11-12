@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 
 	"github.com/ilyakaznacheev/cleanenv"
@@ -112,7 +113,13 @@ var Config AppConfig
 func init() {
 	var config AppConfig
 
-	err := cleanenv.ReadConfig("config.yml", &config)
+	configFilePath := os.Getenv("BACKEND_CONFIG_PATH")
+	fmt.Println("configFilePath:", configFilePath)
+	if configFilePath == "" {
+		configFilePath = "config.yml"
+	}
+
+	err := cleanenv.ReadConfig(configFilePath, &config)
 	if err != nil {
 		fmt.Println("config load error:", err)
 	}

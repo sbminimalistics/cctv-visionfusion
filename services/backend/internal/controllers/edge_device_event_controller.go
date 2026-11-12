@@ -101,30 +101,32 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 					}
 				}
 
-				now := time.Now().UTC()
-				token, expiry, err := services.GetDownloadLinkService().GetNewToken(
-					ev.GetAbsolutePicturePath(),
-					fmt.Sprintf("%s/%d/%d", ev.DeviceID, now.Year(), now.Month()),
-					ev.GetUUID(),
-				)
-
-				if err != nil {
-					fmt.Printf("token generation failed: %v", err)
-				} else {
-					source := mappers.DownloadInstructionBase{
-						Token:       token,
-						TokenExpiry: expiry,
-						RedeemPath:  "v1/links/redeem",
-					}
-					instruction := mappers.DeviceInstructionToProto(source)
-
-					bytes, _ := proto.Marshal(instruction)
-					c.rmqClient.Publish(
-						ctx,
-						"requests.download.screenshot",
-						routingKey,
-						bytes,
+				if ev.Parsed.GetEventType() == "fielddetection" {
+					now := time.Now().UTC()
+					token, expiry, err := services.GetDownloadLinkService().GetNewToken(
+						ev.GetAbsolutePicturePath(),
+						fmt.Sprintf("%s/%d/%d", ev.DeviceID, now.Year(), now.Month()),
+						ev.GetUUID(),
 					)
+
+					if err != nil {
+						fmt.Printf("token generation failed: %v", err)
+					} else {
+						source := mappers.DownloadInstructionBase{
+							Token:       token,
+							TokenExpiry: expiry,
+							RedeemPath:  "v1/links/redeem",
+						}
+						instruction := mappers.DeviceInstructionToProto(source)
+
+						bytes, _ := proto.Marshal(instruction)
+						c.rmqClient.Publish(
+							ctx,
+							"requests.download.screenshot",
+							routingKey,
+							bytes,
+						)
+					}
 				}
 			}
 		}

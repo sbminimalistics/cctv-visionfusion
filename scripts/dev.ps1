@@ -1,3 +1,8 @@
+param (
+    [Alias("backend-config")]
+    [string]$BackendConfig
+)
+
 # dynamic root path alignment
 # $PSScriptRoot is always the folder where this script lives (e.g., /scripts)
 $scriptDir = $PSScriptRoot
@@ -258,12 +263,18 @@ Start-Sleep -Seconds 2
 
 Write-Host "[dev] launching workspace components natively..." -ForegroundColor Yellow
 
+# Build the backend command dynamically
+$backendCmd = "cd services/backend && go tool air"
+if (-not [string]::IsNullOrWhiteSpace($BackendConfig)) {
+    $backendCmd = "cd services/backend && set BACKEND_CONFIG_PATH=${BackendConfig}&& go tool air"
+}
+
 # set execution configurations
 $concurrentArgs = @(
     "concurrently",
     "--names", "BE,DWNLDR,DASH,VITE,CV",
     "--prefix-colors", "cyan,green,magenta,gray",
-    "cd services/backend && go tool air",
+    $backendCmd,
     "cd services/downloader && go tool air",
     "cd services/dashboard && npm run dev",
     "cd services/dashboard/web-ui && npm run dev",
