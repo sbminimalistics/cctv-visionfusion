@@ -58,7 +58,7 @@ jobs:
 
           git pull --rebase
 
-          jq --arg sha "$SHORT_SHA" '.downloader_image_tag = $sha' deployments/terraform/ci-prebuilt/versions.auto.tfvars.json > tmp.json
+          jq --arg sha "sha-$SHORT_SHA" '.downloader_image_tag = $sha' deployments/terraform/ci-prebuilt/versions.auto.tfvars.json > tmp.json
           mv tmp.json deployments/terraform/ci-prebuilt/versions.auto.tfvars.json
 
           git add deployments/terraform/ci-prebuilt/versions.auto.tfvars.json
