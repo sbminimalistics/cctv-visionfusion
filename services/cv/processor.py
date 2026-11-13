@@ -13,7 +13,7 @@ class StreamProcessor:
     def process_message(
         self, message_body: dict, confidence_threshold: float | None = None
     ):
-        """This method handles incoming messages from your queue."""
+        """This method handles incoming messages from rmq queue."""
 
         event = downloads_pb2.DownloadCompleteEvent()
         event.ParseFromString(message_body)
@@ -34,7 +34,8 @@ class StreamProcessor:
 
         img_height, img_width, _ = frame.shape
         print(
-            f"seaweed_object_key: {seaweed_object_key} dimensions: {img_width}x{img_height}"
+            f"seaweed_object_key: {seaweed_object_key} dimensions: {img_width}x{img_height}",
+            flush=True,
         )
 
         #     # execute object detection

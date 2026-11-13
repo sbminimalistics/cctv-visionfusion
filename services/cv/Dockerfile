@@ -14,8 +14,8 @@ RUN pip install --no-cache-dir --force-reinstall --no-deps --only-binary=:all: o
 
 # COPY /models ./models
 RUN mkdir -p ./models
-ADD https://huggingface.co/onnx-community/yolov10s/blob/main/onnx/model.onnx /app/models/yolov10s.onnx
-ADD https://huggingface.co/onnx-community/yolov10s/blob/main/config.json /app/models/yolov10_config.json
+ADD https://huggingface.co/onnx-community/yolov10s/resolve/main/onnx/model.onnx /app/models/yolov10s.onnx
+ADD https://huggingface.co/onnx-community/yolov10s/resolve/main/config.json /app/models/yolov10_config.json
 COPY proto/ ./proto/
 COPY *.py ./
 
