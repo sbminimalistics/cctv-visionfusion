@@ -4,17 +4,9 @@ terraform {
       source  = "kreuzwerker/docker"
       version = "~> 3.0.0"
     }
-    rabbitmq = {
-      source  = "cyrilgdn/rabbitmq"
-      version = "~> 1.10" 
-    }
     time = {
       source  = "hashicorp/time"
       version = "~> 0.11"
-    }
-    minio = {
-      source  = "aminueza/minio"
-      version = "3.45.0"
     }
   }
 }

@@ -8,12 +8,12 @@ resource "docker_container" "rabbitmq" {
   }
 
   upload {
-    content        = file("${path.module}/../../rabbitmq/rabbitmq.conf")
+    content        = file("${path.module}/../../../rabbitmq/rabbitmq.conf")
     file           = "/etc/rabbitmq/rabbitmq.conf"
   }
 
   upload {
-    content        = file("${path.module}/../../rabbitmq/definitions.json")
+    content        = file("${path.module}/../../../rabbitmq/definitions.json")
     file           = "/etc/rabbitmq/definitions.json"
   }
 

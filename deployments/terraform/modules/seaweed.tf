@@ -1,3 +1,7 @@
+locals {
+  seaweed_dir = coalesce(var.seaweed_host_dir, "/home/${var.ssh_user}/s3")
+}
+
 resource "null_resource" "seaweed_remote_setup" {
   connection {
     type        = "ssh"
@@ -8,9 +12,9 @@ resource "null_resource" "seaweed_remote_setup" {
 
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p /home/ovd/s3/data",
-      "mkdir -p /home/ovd/s3/config",
-      "chown -R 1000:1000 /home/ovd/s3"
+      "mkdir -p ${local.seaweed_dir}/data",
+      "mkdir -p ${local.seaweed_dir}/config",
+      "chown -R 1000:1000 ${local.seaweed_dir}"
     ]
   }
 
@@ -26,7 +30,7 @@ resource "null_resource" "seaweed_remote_setup" {
       admin_pass      = var.seaweed_admin_pass
       bucket          = var.seaweed_bucket
     })
-    destination = "/home/ovd/s3/config/s3.json"
+    destination = "${local.seaweed_dir}/config/s3.json"
   }
 }
 
@@ -35,11 +39,6 @@ resource "docker_container" "seaweedfs" {
   image   = "chrislusf/seaweedfs:latest"
   user    = "1000:1000"
   restart = "always"
-
-  volumes {
-    host_path      = "/home/ovd/s3/config/s3.json"
-    container_path = "/etc/seaweedfs/s3.json"
-  }
 
   ports {
     internal = 9333
@@ -57,12 +56,12 @@ resource "docker_container" "seaweedfs" {
   command = ["server", "-dir=/data", "-s3", "-s3.config=/etc/seaweedfs/s3.json"]
 
   volumes {
-    host_path      = "/home/ovd/s3/config/s3.json"
+    host_path      = "${local.seaweed_dir}/config/s3.json"
     container_path = "/etc/seaweedfs/s3.json"
   }
 
   volumes {
-    host_path      = "/home/ovd/s3/data"
+    host_path      = "${local.seaweed_dir}/data"
     container_path = "/data"
   }
 

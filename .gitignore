@@ -1,6 +1,5 @@
 # terraform execution cache directory
 **/.terraform/
-*.tfstate*.tfstate.backup
 
 # terraform credential files and secret variables
 *.tfvars

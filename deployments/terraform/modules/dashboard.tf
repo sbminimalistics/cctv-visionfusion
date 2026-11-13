@@ -1,19 +1,7 @@
-# node.js ui image build
-resource "docker_image" "cctv-vf_dashboard" {
-  name = "cctv-visionfusion-dashboard:latest"
-
-  build {
-    context    = "../../services/dashboard"
-    dockerfile = "Dockerfile"
-  }
-
-  keep_locally = true
-}
-
 # node.js container (cctv-visionfusion-dashboard)
-resource "docker_container" "cctv-vf_ui_container" {
+resource "docker_container" "cctv-vf_dashboard_container" {
   name    = "cctv-visionfusion-dashboard"
-  image   = docker_image.cctv-vf_dashboard.image_id 
+  image   = var.dashboard_image
   restart = "unless-stopped"
 
   ports {
