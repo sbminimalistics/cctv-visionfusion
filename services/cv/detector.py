@@ -8,7 +8,7 @@ import onnxruntime as ort
 
 class YOLODetector:
     """Universal detector configured for explicit manual toggling between YOLOv10
-    (with coco.names) and YOLO26 (with config.json).
+    (with coco.names) and YOLO26 (with yolo26_config.json).
     """
 
     def __init__(self, model_path: str, model_names_path: str, confidence_threshold: float):

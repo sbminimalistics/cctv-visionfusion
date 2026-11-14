@@ -1,8 +1,8 @@
 module "stack" {
   source = "../modules"
 
-  backend_image = "cctv-visionfusion-backend-app:latest"
-  cv_image = "cctv-visionfusion-cv:latest"
+  backend_image = docker_image.cctv-vf_backend.image_id
+  cv_image = data.docker_image.cv_local.id
   dashboard_image = docker_image.cctv-vf_dashboard.image_id
   downloader_image = docker_image.cctv-vf_downloader.image_id
 
@@ -62,7 +62,6 @@ module "stack" {
   backend_config_path = var.backend_config_path
 
   depends_on=[
-    terraform_data.remote_docker_build,
     terraform_data.remote_cv_build
   ]
 }

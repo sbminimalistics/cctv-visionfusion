@@ -220,7 +220,7 @@ variable "cv_model_path" {
 
 variable "cv_model_names_path" {
   type        = string
-  default     = "models/coco.names"
+  default     = "models/yolov10_config.json"
 }
 
 variable "downloader_backend_base_url" {

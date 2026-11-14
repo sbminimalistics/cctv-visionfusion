@@ -1,9 +1,8 @@
 # python cv image build
 resource "terraform_data" "remote_cv_build" {
     triggers_replace = [
-        filesha256("../../../services/cv/requirements.txt"),
-        filesha256("../../../services/cv/Dockerfile"),
-        filesha256("../../../services/cv/main.py")
+      for f in fileset("../../../services/cv", "{Dockerfile,requirements.txt,*.py}") :
+      filesha256("../../../services/cv/${f}")
     ]
 
     connection {
@@ -75,4 +74,9 @@ resource "terraform_data" "remote_cv_build" {
             "rm -rf /tmp/cv_build_context"
         ]
     }
+}
+
+data "docker_image" "cv_local" {
+  name       = "cctv-visionfusion-cv:latest"
+  depends_on = [terraform_data.remote_cv_build]
 }
