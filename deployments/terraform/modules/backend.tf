@@ -18,7 +18,7 @@ resource "docker_container" "backend_container" {
   }
 
   env = [
-    "DB_HOST=${var.remote_ubuntu_ip}",
+    "DB_HOST=${var.db_host}",
     "DB_PORT=${var.db_port}",
     "DB_NAME=${var.db_name}",
     "BACKEND_DB_USER=${var.backend_db_user}",
@@ -34,7 +34,8 @@ resource "docker_container" "backend_container" {
 
   depends_on = [
     docker_network.cctv_vf_net,
-    terraform_data.rabbitmq_policy_provisioning
+    terraform_data.rabbitmq_policy_provisioning,
+    docker_container.cctv-vf_db
   ]
 }
 

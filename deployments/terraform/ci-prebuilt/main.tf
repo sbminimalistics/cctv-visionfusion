@@ -30,6 +30,8 @@ module "stack" {
   ssh_user = var.ssh_user
   ssh_key_path = var.ssh_key_path
 
+  db_host = var.db_host
+  db_host_dir = var.db_host_dir
   db_name = var.db_name
   db_port = var.db_port
   admin_db_pass = var.admin_db_pass
@@ -39,6 +41,8 @@ module "stack" {
   dashboard_db_user = var.dashboard_db_user
   dashboard_db_pass = var.dashboard_db_pass
   dashboard_db_schema = var.dashboard_db_schema
+  migration_db_user = var.migration_db_user
+  migration_db_pass = var.migration_db_pass
 
   rmq_host = var.rmq_host
   rmq_port = var.rmq_port

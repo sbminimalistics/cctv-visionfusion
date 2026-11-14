@@ -36,6 +36,16 @@ variable "ssh_key_path" {
   sensitive   = true
 }
 
+variable "db_host" {
+  type        = string
+  description = "Database host address"
+}
+
+variable "db_host_dir" {
+  type        = string
+  description = "Database data and config dir"
+}
+
 variable "db_name" {
   type        = string
   description = "Database name"
@@ -86,6 +96,16 @@ variable "dashboard_db_pass" {
 variable "dashboard_db_schema" {
   type        = string
   description = "Database schema used for dashboard service"
+}
+
+variable "migration_db_user" {
+  type        = string
+  description = "Database migration user"
+}
+
+variable "migration_db_pass" {
+  type        = string
+  description = "Database migration user password"
 }
 
 variable "rmq_host" {

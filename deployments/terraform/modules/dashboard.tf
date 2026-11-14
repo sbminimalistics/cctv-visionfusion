@@ -29,6 +29,7 @@ resource "docker_container" "cctv-vf_dashboard_container" {
   depends_on = [
     docker_network.cctv_vf_net,
     terraform_data.rabbitmq_policy_provisioning,
-    docker_container.seaweedfs
+    docker_container.seaweedfs,
+    docker_container.cctv-vf_db
   ]
 }

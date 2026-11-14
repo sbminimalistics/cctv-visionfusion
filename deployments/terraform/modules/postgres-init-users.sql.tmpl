@@ -1,0 +1,23 @@
+-- Create application-specific roles/users
+CREATE USER ${updaterUser} WITH PASSWORD '${updaterPass}';
+CREATE USER ${backendUser} WITH PASSWORD '${backendPass}';
+CREATE USER ${dashboardUser} WITH PASSWORD '${dashboardPass}';
+
+-- provision schemas
+CREATE SCHEMA ${backendSchema} AUTHORIZATION ${backendUser};
+CREATE SCHEMA ${dashboardSchema} AUTHORIZATION ${dashboardUser};
+
+-- grant the migrator permissions to create things inside both schemas
+GRANT CREATE, USAGE ON SCHEMA ${backendSchema} TO ${updaterUser};
+GRANT CREATE, USAGE ON SCHEMA ${dashboardSchema} TO ${updaterUser};
+
+-- grant targeted schema permissions to maintain complete application safety boundaries
+GRANT ALL ON SCHEMA ${backendSchema} TO ${backendUser};
+GRANT ALL ON SCHEMA ${dashboardSchema} TO ${dashboardUser};
+
+-- default privileges explicitly by SCHEMA
+ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${backendSchema} 
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${backendUser};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${dashboardSchema} 
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${dashboardUser};

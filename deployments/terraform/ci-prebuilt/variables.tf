@@ -16,7 +16,6 @@ variable "downloader_image_tag" {
 
 variable "remote_ubuntu_ip" {
   type        = string
-  default     = "192.168.0.178"
 }
 
 variable "ssh_user" {
@@ -27,6 +26,16 @@ variable "ssh_user" {
 variable "ssh_key_path" {
   type        = string
   sensitive   = true
+}
+
+variable "db_host" {
+  type    = string
+  default = "localhost"
+}
+
+variable "db_host_dir" {
+  type    = string
+  default = null
 }
 
 variable "db_name" {
@@ -72,6 +81,16 @@ variable "dashboard_db_pass" {
 variable "dashboard_db_schema" {
   type        = string
   default     = "cctvvf_dashboard"
+}
+
+variable "migration_db_user" {
+  type    = string
+  default = "updater"
+}
+
+variable "migration_db_pass" {
+  type      = string
+  sensitive = true
 }
 
 variable "rmq_host" {
