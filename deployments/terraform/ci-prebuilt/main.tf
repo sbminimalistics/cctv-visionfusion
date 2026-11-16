@@ -1,21 +1,26 @@
 resource "docker_image" "backend" {
   name         = "ghcr.io/sbminimalistics/cctv-visionfusion/backend:${var.backend_image_tag}"
-  keep_locally = false
+  keep_locally = true
 }
 
 resource "docker_image" "cv" {
   name         = "ghcr.io/sbminimalistics/cctv-visionfusion/cv:${var.cv_image_tag}"
-  keep_locally = false
+  keep_locally = true
 }
 
 resource "docker_image" "dashboard" {
   name         = "ghcr.io/sbminimalistics/cctv-visionfusion/dashboard:${var.dashboard_image_tag}"
-  keep_locally = false
+  keep_locally = true
 }
 
 resource "docker_image" "downloader" {
   name         = "ghcr.io/sbminimalistics/cctv-visionfusion/downloader:${var.downloader_image_tag}"
-  keep_locally = false
+  keep_locally = true
+}
+
+resource "docker_image" "migration" {
+  name         = "ghcr.io/sbminimalistics/cctv-visionfusion/downloader:${var.migration_image_tag}"
+  keep_locally = true
 }
 
 module "stack" {
@@ -25,6 +30,7 @@ module "stack" {
   cv_image = docker_image.cv.image_id
   dashboard_image = docker_image.dashboard.image_id
   downloader_image = docker_image.downloader.image_id
+  migration_image = docker_image.migration.image_id
 
   remote_ubuntu_ip = var.remote_ubuntu_ip
   ssh_user = var.ssh_user

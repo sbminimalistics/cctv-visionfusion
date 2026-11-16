@@ -1,4 +1,3 @@
-# node.js container (cctv-visionfusion-downloader)
 resource "docker_container" "cctv-vf_downloader_container" {
   name    = "cctv-visionfusion-downloader"
   image   = var.downloader_image

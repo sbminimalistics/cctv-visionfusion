@@ -14,6 +14,10 @@ variable "downloader_image_tag" {
   type        = string
 }
 
+variable "migration_image_tag" {
+  type        = string
+}
+
 variable "remote_ubuntu_ip" {
   type        = string
 }
