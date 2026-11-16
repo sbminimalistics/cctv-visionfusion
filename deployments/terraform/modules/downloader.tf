@@ -3,6 +3,7 @@ resource "docker_container" "cctv-vf_downloader_container" {
   name    = "cctv-visionfusion-downloader"
   image   = var.downloader_image
   restart = "unless-stopped"
+  network_mode = "bridge"
 
   networks_advanced {
     name = docker_network.cctv_vf_net.name
@@ -21,7 +22,8 @@ resource "docker_container" "cctv-vf_downloader_container" {
     "DOWNLOADER_SEAWEED_PASS=${var.seaweed_downloader_pass}",
 
     "RMQ_QUEUE_DOWNLOADER_FEED=${var.rmq_queue_downloader_feed}",
-    "DOWNLOADER_BACKEND_BASE_URL=${var.downloader_backend_base_url}",
+    "BACKEND_API_HOST=${var.backend_api_host}",
+    "BACKEND_API_PORT=${var.backend_api_port}",
     "DOWNLOADER_SAVE_PATH_PREFIX=${var.downloader_save_path_prefix}"
   ]
 

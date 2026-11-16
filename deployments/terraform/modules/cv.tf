@@ -3,6 +3,7 @@ resource "docker_container" "cctv-vf_cv_container" {
   name    = "cctv-visionfusion-cv"
   image   = var.cv_image 
   restart = "unless-stopped"
+  network_mode = "bridge"
 
   networks_advanced {
     name = docker_network.cctv_vf_net.name

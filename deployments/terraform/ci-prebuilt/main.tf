@@ -80,7 +80,8 @@ module "stack" {
   cv_model_path = var.cv_model_path
   cv_model_names_path = var.cv_model_names_path
 
-  downloader_backend_base_url = var.downloader_backend_base_url
+  backend_api_host = var.backend_api_host
+  backend_api_port = var.backend_api_port
   downloader_save_path_prefix = var.downloader_save_path_prefix
 
   backend_config_path = var.backend_config_path

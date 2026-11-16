@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -25,7 +27,13 @@ type ResponsePacket struct {
 }
 
 func ExchangeToken(apiEndpoint string, token string) (ResponsePacket, error) {
-	url, err := url.JoinPath(config.Config.BackendBaseURL, apiEndpoint)
+	url, err := url.JoinPath(
+		strings.Join([]string{
+			config.Config.BackendApiHost,
+			strconv.Itoa(int(config.Config.BackendApiPort)),
+		}, ":"),
+		apiEndpoint,
+	)
 
 	outPacket := RequestPacket{
 		Token: token,

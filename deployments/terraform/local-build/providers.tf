@@ -13,5 +13,5 @@ terraform {
 
 provider "docker" {
   host = "ssh://${var.ssh_user}@${var.remote_ubuntu_ip}:22"
-  ssh_opts = ["-i", "'${var.ssh_key_path}'", "-o", "IdentitiesOnly=yes"]
+  ssh_opts = ["-i", "${var.ssh_key_path}", "-o", "IdentitiesOnly=yes"]
 }

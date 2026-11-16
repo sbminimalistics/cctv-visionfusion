@@ -2,6 +2,7 @@ resource "docker_container" "backend_container" {
   name    = "cctv-visionfusion-backend"
   image   = var.backend_image
   restart = "unless-stopped"
+  network_mode = "bridge"
 
   upload {
     content = file("${path.module}/../../../${var.backend_config_path}")
@@ -29,7 +30,8 @@ resource "docker_container" "backend_container" {
     "BACKEND_RMQ_USER=${var.backend_rmq_user}",
     "BACKEND_RMQ_PASS=${var.backend_rmq_pass}",
     "RMQ_VHOST=${var.rmq_vhost}",
-    "CONFIG_PATH=/app/config.yml"
+    "CONFIG_PATH=/app/config.yml",
+    "BACKEND_API_PORT=${var.backend_api_port}"
   ]
 
   depends_on = [

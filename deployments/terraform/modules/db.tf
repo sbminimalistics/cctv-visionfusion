@@ -45,6 +45,7 @@ resource "docker_container" "cctv-vf_db" {
   name    = "cctv-visionfusion-db"
   image   = "postgres:16-alpine"
   restart = "unless-stopped"
+  network_mode = "bridge"
 
   networks_advanced {
     name = docker_network.cctv_vf_net.name

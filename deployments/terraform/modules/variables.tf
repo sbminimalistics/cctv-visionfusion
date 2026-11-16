@@ -4,6 +4,12 @@ variable "backend_image" {
   default     = null
 }
 
+variable "migration_image" {
+  type        = string
+  description = "migration image id"
+  default     = null
+}
+
 variable "cv_image" {
   type        = string
   description = "cv image id"
@@ -54,7 +60,7 @@ variable "db_name" {
 
 variable "db_port" {
   type        = string
-  description = "Database name"
+  description = "Database port"
   default     = null
 }
 
@@ -280,9 +286,14 @@ variable "cv_model_names_path" {
   description = "Path to object detection names file"
 }
 
-variable "downloader_backend_base_url" {
+variable "backend_api_host" {
   type        = string
-  description = "Path to backend service api"
+  description = "Host of backend service api"
+}
+
+variable "backend_api_port" {
+  type        = string
+  description = "Backend api port"
 }
 
 variable "downloader_save_path_prefix" {

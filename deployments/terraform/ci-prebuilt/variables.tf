@@ -258,9 +258,14 @@ variable "cv_model_names_path" {
   default     = "models/yolov10_config.json"
 }
 
-variable "downloader_backend_base_url" {
+variable "backend_api_host" {
   type        = string
-  default     = "http://127.0.0.1:8001"
+  default     = "http://cctv-visionfusion-backend"
+}
+
+variable "backend_api_port" {
+  type        = string
+  default     = "8001"
 }
 
 variable "downloader_save_path_prefix" {

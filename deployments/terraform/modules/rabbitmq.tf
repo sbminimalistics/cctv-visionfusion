@@ -1,6 +1,13 @@
+resource "docker_image" "rabbitmq" {
+  name         = "rabbitmq:4-management"
+  keep_locally = true
+}
+
 resource "docker_container" "rabbitmq" {
-  name  = "rabbitmq-broker"
-  image = "rabbitmq:4-management"
+  name         = "rabbitmq-broker"
+  image        = docker_image.rabbitmq.image_id
+  network_mode = "bridge"
+  restart      = "unless-stopped"
 
   ports {
     internal = var.rmq_port

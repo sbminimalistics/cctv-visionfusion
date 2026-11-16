@@ -34,11 +34,17 @@ resource "null_resource" "seaweed_remote_setup" {
   }
 }
 
+resource "docker_image" "seaweedfs" {
+  name         = "chrislusf/seaweedfs:latest"
+  keep_locally = true
+}
+
 resource "docker_container" "seaweedfs" {
   name    = "seaweedfs"
-  image   = "chrislusf/seaweedfs:latest"
+  image   = docker_image.seaweedfs.image_id
   user    = "1000:1000"
   restart = "always"
+  network_mode = "bridge"
 
   ports {
     internal = 9333
@@ -51,6 +57,10 @@ resource "docker_container" "seaweedfs" {
   ports {
     internal = 8333
     external = var.seaweed_api_port
+  }
+
+  networks_advanced {
+    name = docker_network.cctv_vf_net.name
   }
 
   command = ["server", "-dir=/data", "-s3", "-s3.config=/etc/seaweedfs/s3.json"]
@@ -66,4 +76,30 @@ resource "docker_container" "seaweedfs" {
   }
 
   depends_on = [null_resource.seaweed_remote_setup]
+}
+
+resource "terraform_data" "seaweedfs_bucket" {
+  depends_on = [docker_container.seaweedfs]
+
+  triggers_replace = [
+    docker_container.seaweedfs.id,
+    var.seaweed_bucket
+  ]
+
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      user        = var.ssh_user
+      host        = var.remote_ubuntu_ip
+      private_key = file(var.ssh_key_path)
+    }
+
+    inline = [
+      "echo 'Waiting for SeaweedFS to initialize...'",
+      "sleep 5",
+      "echo 'Creating bucket: ${var.seaweed_bucket}'",
+      "echo 's3.bucket.create -name=${var.seaweed_bucket}' | docker exec -i seaweedfs weed shell",
+      "echo 'SeaweedFS bucket created!'"
+    ]
+  }
 }

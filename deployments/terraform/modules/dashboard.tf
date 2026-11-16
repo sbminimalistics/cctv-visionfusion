@@ -3,6 +3,7 @@ resource "docker_container" "cctv-vf_dashboard_container" {
   name    = "cctv-visionfusion-dashboard"
   image   = var.dashboard_image
   restart = "unless-stopped"
+  network_mode = "bridge"
 
   ports {
     internal = 3000
@@ -14,9 +15,9 @@ resource "docker_container" "cctv-vf_dashboard_container" {
   }
 
   env = [
-    "DB_HOST=${var.remote_ubuntu_ip}",
-    "DB_PORT=5432",
-    "DB_NAME=cctv-vf_production",
+    "DB_HOST=${var.db_host}",
+    "DB_PORT=${var.db_port}",
+    "DB_NAME=${var.db_name}",
     "DASHBOARD_DB_USER=${var.dashboard_db_user}",
     "DASHBOARD_DB_PASS=${var.dashboard_db_pass}",
     "RMQ_HOST=${var.rmq_host}",

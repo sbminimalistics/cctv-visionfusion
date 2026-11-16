@@ -2,6 +2,7 @@ module "stack" {
   source = "../modules"
 
   backend_image = docker_image.cctv-vf_backend.image_id
+  migration_image = docker_image.cctv-vf_migration.image_id
   cv_image = data.docker_image.cv_local.id
   dashboard_image = docker_image.cctv-vf_dashboard.image_id
   downloader_image = docker_image.cctv-vf_downloader.image_id
@@ -60,7 +61,8 @@ module "stack" {
   cv_model_path = var.cv_model_path
   cv_model_names_path = var.cv_model_names_path
 
-  downloader_backend_base_url = var.downloader_backend_base_url
+  backend_api_host = var.backend_api_host
+  backend_api_port = var.backend_api_port
   downloader_save_path_prefix = var.downloader_save_path_prefix
 
   backend_config_path = var.backend_config_path

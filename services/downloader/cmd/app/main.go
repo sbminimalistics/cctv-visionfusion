@@ -21,6 +21,8 @@ import (
 func main() {
 	fmt.Println("starting CCTV VisionFusion downloader ...")
 
+	fmt.Println("backend host:", config.Config.BackendApiHost, "port:", config.Config.BackendApiPort)
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
