@@ -4,6 +4,7 @@
 ![cv Build Status](https://github.com/sbminimalistics/cctv-visionfusion/actions/workflows/build-cv.yml/badge.svg)
 ![dashboard Build Status](https://github.com/sbminimalistics/cctv-visionfusion/actions/workflows/build-dashboard.yml/badge.svg)
 ![downloader Build Status](https://github.com/sbminimalistics/cctv-visionfusion/actions/workflows/build-downloader.yml/badge.svg)
+![migration Build Status](https://github.com/sbminimalistics/cctv-visionfusion/actions/workflows/build-migration.yml/badge.svg)
 
 # CCTV VisionFusion
 
