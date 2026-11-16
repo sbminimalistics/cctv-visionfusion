@@ -2,6 +2,11 @@ locals {
   db_dir = coalesce(var.db_host_dir, "/home/${var.ssh_user}/db")
 }
 
+resource "docker_image" "postgres" {
+  name         = "postgres:16-alpine"
+  keep_locally = true
+}
+
 resource "null_resource" "db_remote_setup" {
   connection {
     type        = "ssh"
@@ -43,7 +48,7 @@ resource "null_resource" "db_remote_setup" {
 
 resource "docker_container" "cctv-vf_db" {
   name    = "cctv-visionfusion-db"
-  image   = "postgres:16-alpine"
+  image   = docker_image.postgres.image_id
   restart = "unless-stopped"
   network_mode = "bridge"
 
