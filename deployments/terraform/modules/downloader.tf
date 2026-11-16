@@ -11,8 +11,8 @@ resource "docker_container" "cctv-vf_downloader_container" {
   env = [
     "RMQ_HOST=${var.rmq_host}",
     "RMQ_PORT=${var.rmq_port}",
-    "DOWNLOADER_RMQ_USER=${var.dashboard_rmq_user}",
-    "DOWNLOADER_RMQ_PASS=${var.dashboard_rmq_pass}",
+    "DOWNLOADER_RMQ_USER=${var.downloader_rmq_user}",
+    "DOWNLOADER_RMQ_PASS=${var.downloader_rmq_pass}",
     "RMQ_VHOST=${var.rmq_vhost}",
     "SEAWEED_HOST=${var.seaweed_host}",
     "SEAWEED_API_PORT=${var.seaweed_api_port}",
