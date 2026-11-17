@@ -2,7 +2,7 @@ package bootstrap
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"sync"
 
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
@@ -40,7 +40,7 @@ func WireEdgeDeviceEventController(
 	// start message routing based on the provided config
 	controller.StartMessaging(ctx, config.Config.Routing)
 
-	fmt.Printf("successfully wired %d edge devices\n", len(config.Config.EdgeDevices))
+	slog.Info("successfully wired edge devices", "count", len(config.Config.EdgeDevices))
 
 	return controller
 }
@@ -53,6 +53,7 @@ func createListener(device config.EdgeDeviceConfig) *edge_device.SSEListener {
 			&edge_device.HikvisionPacketParser{},
 		)
 	default:
-		panic(fmt.Sprintf("unknown edge device manufacturer '%s'", device.Manufacturer))
+		slog.Error("unknown edge device manufacturer", "manufacturer", device.Manufacturer)
+		return nil
 	}
 }

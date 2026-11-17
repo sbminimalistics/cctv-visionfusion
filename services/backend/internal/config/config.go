@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"regexp"
 
@@ -54,11 +55,12 @@ type DBConfig struct {
 }
 
 type RabbitMQConfig struct {
-	Host     string `yaml:"host" env:"RMQ_HOST" env-default:"localhost"`
-	Port     port   `yaml:"port" env:"RMQ_PORT" env-default:"5672"`
-	User     string `yaml:"user" env:"BACKEND_RMQ_USER" env-default:"backend_worker"`
-	Password string `yaml:"password" env:"BACKEND_RMQ_PASS"`
-	VHost    string `yaml:"vhost" env:"RMQ_VHOST" env-default:"/cctv-vf"`
+	Host                     string `yaml:"host" env:"RMQ_HOST" env-default:"localhost"`
+	Port                     port   `yaml:"port" env:"RMQ_PORT" env-default:"5672"`
+	User                     string `yaml:"user" env:"BACKEND_RMQ_USER" env-default:"backend_worker"`
+	Password                 string `yaml:"password" env:"BACKEND_RMQ_PASS"`
+	VHost                    string `yaml:"vhost" env:"RMQ_VHOST" env-default:"/cctv-vf"`
+	QueueDetectionsCompleted string `yaml:"queue_detections_completed" env:"RMQ_QUEUE_BACKEND_DETECTIONS_COMPLETED"`
 }
 
 type RouteSourceEventRegexp struct {
@@ -114,14 +116,14 @@ func init() {
 	var config AppConfig
 
 	configFilePath := os.Getenv("BACKEND_CONFIG_PATH")
-	fmt.Println("configFilePath:", configFilePath)
+	slog.Info("config initialization", "path", configFilePath)
 	if configFilePath == "" {
 		configFilePath = "config.yml"
 	}
 
 	err := cleanenv.ReadConfig(configFilePath, &config)
 	if err != nil {
-		fmt.Println("config load error:", err)
+		slog.Warn("config load error", "error", err)
 	}
 
 	_ = cleanenv.ReadConfig(".env", &config)
@@ -130,9 +132,9 @@ func init() {
 	// and lock down the final production/dev overrides into the final structure.
 	err = cleanenv.ReadEnv(&config)
 	if err != nil {
-		fmt.Println("Environment variable sync error:", err)
+		slog.Warn("environment variable sync error", "error", err)
 	} else {
-		fmt.Println("Configuration successfully synchronized across all layers!")
+		slog.Info("configuration successfully synchronized across all layers")
 	}
 
 	Config = config

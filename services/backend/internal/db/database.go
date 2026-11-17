@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -19,7 +20,7 @@ func Connect(host string, port int, user, password, dbname string) (*DBWrapper, 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=UTC",
 		host, user, password, dbname, port)
 
-	fmt.Println("connecting to postgres via GORM")
+	slog.Info("connecting to postgres via GORM")
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
@@ -28,7 +29,7 @@ func Connect(host string, port int, user, password, dbname string) (*DBWrapper, 
 		return nil, fmt.Errorf("failed to connect to postgres via GORM: %w", err)
 	}
 
-	fmt.Println("successfully connected to postgres via GORM")
+	slog.Info("successfully connected to postgres via GORM")
 
 	// Access the underlying standard sql.DB pool to tweak performance limits
 	sqlDB, err := db.DB()

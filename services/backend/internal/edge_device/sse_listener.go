@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"mime"
 	"mime/multipart"
 	"net"
@@ -76,16 +77,16 @@ func (r *SSEListener) ConnectAndRetryForever(ctx context.Context, deviceConfig c
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Printf("[SSE] exiting connection routine loop for %s\n", r.DeviceID)
+			slog.Info("[SSE] exiting connection routine loop", "device_id", r.DeviceID)
 			return
 		default:
 		}
 
-		fmt.Printf("[SSE] attempting to open Hikvision ISAPI alert stream for %s...\n", r.DeviceID)
+		slog.Info("[SSE] attempting to open Hikvision ISAPI alert stream...", "device_id", r.DeviceID)
 
 		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 		if err != nil {
-			log.Printf("[SSE] failed to build request schema for %s: %v\n", r.DeviceID, err)
+			slog.Warn("[SSE] failed to build request schema", "device_id", r.DeviceID, "error", err)
 			goto RETRY_DELAY
 		}
 
@@ -95,14 +96,14 @@ func (r *SSEListener) ConnectAndRetryForever(ctx context.Context, deviceConfig c
 		if resp, err := client.Do(req); err == nil {
 			err = r.readAlertStream(ctx, resp)
 			if err != nil {
-				log.Printf("[SSE] loop broken for camera %s: %v\n", r.DeviceID, err)
+				slog.Warn("[SSE] loop broken", "device_id", r.DeviceID, "error", err)
 			}
 		} else {
-			log.Printf("[SSE] connection to camera %s failed: %v\n", r.DeviceID, err)
+			slog.Warn("[SSE] connection to device failed", "device_id", r.DeviceID, "error", err)
 		}
 
 	RETRY_DELAY:
-		fmt.Printf("[SSE] device %s resting, re-attempting connection link in 5 seconds...\n", r.DeviceID)
+		slog.Info("[SSE] re-attempting connection link in 5 seconds", "device_id", r.DeviceID)
 		select {
 		case <-ctx.Done():
 			return
@@ -124,7 +125,7 @@ func (r *SSEListener) readAlertStream(ctx context.Context, resp *http.Response) 
 		boundary = "boundary"
 	}
 
-	fmt.Printf("[SSE] connected to %s, tracking stream boundary: %s\n", r.DeviceID, boundary)
+	slog.Info("[SSE] connected to device", "device_id", r.DeviceID, "stream_boundary", boundary)
 	multipartReader := multipart.NewReader(resp.Body, boundary)
 
 	for {
@@ -154,7 +155,7 @@ func (r *SSEListener) readAlertStream(ctx context.Context, resp *http.Response) 
 		fields, err := r.parser.Parse(data)
 
 		if err != nil {
-			fmt.Println("[SSE] error parsing packet:", err)
+			slog.Warn("[SSE] error parsing packet", "error", err)
 		}
 
 		eventID, _ := uuid.NewV7()
@@ -179,7 +180,7 @@ func (r *SSEListener) readAlertStream(ctx context.Context, resp *http.Response) 
 		if r.events != nil {
 			r.events <- packet
 		} else {
-			fmt.Printf("[SSE] device %s: data dropped, listener not registered to controller yet\n", r.DeviceID)
+			slog.Warn("[SSE] device data dropped, listener not registered to controller yet", "device_id", r.DeviceID)
 		}
 	}
 }

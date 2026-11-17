@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 	"sync"
@@ -68,7 +69,7 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 			case <-ctx.Done():
 				return
 			case cev := <-c.incomingCompositionEvents:
-				fmt.Println("\033[31mcomposition event received:\033[0m", cev)
+				slog.Debug("composition event received", "raw_event", cev)
 				for _, route := range routing {
 					re := route.Source.EventTypeRegexp.Regexp
 					if route.Source.SourceID == cev.CompositionID && re.MatchString(string(cev.EventType)) {
@@ -76,7 +77,7 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 						triggerEvent := mappers.CompositionTriggerToProto(cev)
 						bytes, err := proto.Marshal(triggerEvent)
 						if err != nil {
-							fmt.Println("failed marshaling proto.Message, error:", err)
+							slog.Error("failed marshaling proto.Message", "error", err)
 						}
 						c.rmqClient.Publish(ctx, route.DestinationExchange, routingKey, bytes)
 					}
@@ -86,16 +87,15 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 					comp.TrackEvent(ev)
 				}
 				routingKey := strings.Join([]string{"device.", ev.DeviceID, ".event"}, "")
-				// fmt.Println("<- event type:", ev.Parsed.GetEventType())
+				// slog.Debug("<- event type:", "type", ev.Parsed.GetEventType())
 				for _, route := range routing {
 					re := route.Source.EventTypeRegexp.Regexp
 					match := re.MatchString(ev.Parsed.GetEventType())
-					// fmt.Println("cmp regexp", re.String(), "match?", match)
 					if route.Source.SourceID == ev.DeviceID && match {
 						deviceEvent := mappers.DeviceEventToProto(ev)
 						bytes, err := proto.Marshal(deviceEvent)
 						if err != nil {
-							fmt.Println("failed marshaling proto.Message, error:", err)
+							slog.Error("failed marshaling proto.Message", "error", err)
 						}
 						c.rmqClient.Publish(ctx, route.DestinationExchange, routingKey, bytes)
 					}
@@ -110,7 +110,7 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 					)
 
 					if err != nil {
-						fmt.Printf("token generation failed: %v", err)
+						slog.Error("token generation failed", "error", err)
 					} else {
 						source := mappers.DownloadInstructionBase{
 							Token:       token,

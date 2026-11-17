@@ -133,5 +133,5 @@ downloaderProgressLoop:
 	fmt.Println("shutdown initiated, waiting for edge streams to exit...")
 
 	wg.Wait()
-	fmt.Println("all edge devices disconnected, closing infrastructure...")
+	fmt.Println("closing infrastructure...")
 }

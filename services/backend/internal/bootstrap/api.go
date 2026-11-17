@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -102,7 +103,7 @@ func WireAPIServer(ctx context.Context) {
 
 	go func() {
 		<-ctx.Done()
-		fmt.Println("shutdown signal received, closing API server...")
+		slog.Info("shutdown signal received, closing API server...")
 
 		// 3-second deadline for in-flight requests to finish
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -116,5 +117,5 @@ func WireAPIServer(ctx context.Context) {
 		log.Fatalf("API server failed to listen: %v", err)
 	}
 
-	fmt.Println("API server worker clean exit")
+	slog.Info("API server worker clean exit")
 }

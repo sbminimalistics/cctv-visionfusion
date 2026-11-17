@@ -2,20 +2,24 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
+	"google.golang.org/protobuf/proto"
 	"sbminimalistics.com/cctv-visionfusion/internal/bootstrap"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/internal/db"
 	"sbminimalistics.com/cctv-visionfusion/internal/messaging"
+	"sbminimalistics.com/cctv-visionfusion/proto/downloads"
 )
 
 func main() {
-	fmt.Println("starting CCTV VisionFusion main backend ...")
+	defer bootstrap.InitTelemetry("cctv-BE")()
+
+	slog.Info("starting CCTV VisionFusion backend")
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -30,8 +34,10 @@ func main() {
 	)
 
 	if err != nil {
-		fmt.Println("db connection error:,", err)
+		slog.Error("db connection error", "error", err)
 	}
+
+	var wg sync.WaitGroup
 
 	// initialize RabbitMQ client
 	rmqClient := messaging.NewRMQClient(
@@ -42,14 +48,39 @@ func main() {
 		config.Config.RabbitMQ.VHost,
 	)
 
-	fmt.Println("connecting to RabbitMQ broker instance...")
+	slog.Info("connecting to RabbitMQ broker instance...")
 	if err := rmqClient.Connect(); err != nil {
-		fmt.Printf("RabbitMQ connection failed to initialize: %v", err)
+		slog.Error("RabbitMQ connection failed to initialize", "error", err)
+	} else {
+		slog.Info("RabbitMQ transport connection pipeline live.")
+		ch, err := rmqClient.Consume(ctx, config.Config.RabbitMQ.QueueDetectionsCompleted, "downloader")
+
+		if err != nil {
+			slog.Error("call for consume failed", "error", err)
+		}
+
+		wg.Go(func() {
+		messageReadLoop:
+			for {
+				select {
+				case <-ctx.Done():
+					break messageReadLoop
+				case src := <-ch:
+					slog.Info("RabbitMQ message received")
+					err := rmqClient.Ack(src.DeliveryTag, false)
+					if err != nil {
+						continue
+					}
+					var msg downloads.DownloadInstruction
+					proto.Unmarshal(src.Body, &msg)
+					if src.Body == nil {
+						continue
+					}
+				}
+			}
+		})
 	}
 	defer rmqClient.Close()
-	fmt.Println("RabbitMQ transport connection pipeline live.")
-
-	var wg sync.WaitGroup
 
 	// wire controllers
 	_ = bootstrap.WireEdgeDeviceEventController(ctx, &wg, rmqClient)
@@ -58,12 +89,12 @@ func main() {
 	bootstrap.WireServices(ctx)
 
 	// wire api enpoints
-	fmt.Printf("starting API on port %d ...\n", config.Config.API.Port)
+	slog.Info("starting API", "port", config.Config.API.Port)
 	wg.Go(func() { bootstrap.WireAPIServer(ctx) })
 
 	<-ctx.Done()
-	fmt.Println("Shutdown initiated. Waiting for edge streams to exit...")
+	slog.Info("shutdown initiated, waiting for edge streams to exit...")
 
 	wg.Wait()
-	fmt.Println("All edge devices disconnected. Closing infrastructure...")
+	slog.Info("all edge devices disconnected, closing infrastructure...")
 }

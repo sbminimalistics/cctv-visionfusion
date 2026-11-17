@@ -2,14 +2,13 @@ package bootstrap
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 
 	"sbminimalistics.com/cctv-visionfusion/internal/services"
 )
 
 func WireServices(ctx context.Context) {
-	fmt.Println("starting services ...")
-	fmt.Println("starting download link service ...")
+	slog.Info("starting download link service ...")
 	services.InitDownloadLinkService(ctx)
-	fmt.Println("services started")
+	slog.Info("services started")
 }
