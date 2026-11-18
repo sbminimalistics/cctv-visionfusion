@@ -266,7 +266,7 @@ Write-Host "[dev] launching workspace components natively..." -ForegroundColor Y
 # Build the backend command dynamically
 $backendCmd = "cd services/backend && go tool air"
 if (-not [string]::IsNullOrWhiteSpace($BackendConfig)) {
-    $backendCmd = "cd services/backend && set BACKEND_CONFIG_PATH=${BackendConfig}&& go tool air"
+    $env:BACKEND_CONFIG_PATH = $BackendConfig
 }
 
 # set execution configurations
@@ -274,7 +274,7 @@ $concurrentArgs = @(
     "concurrently",
     "--names", "BE,DWNLDR,DASH,VITE,CV",
     "--prefix-colors", "cyan,green,magenta,gray",
-    $backendCmd,
+    "cd services/backend && go tool air",
     "cd services/downloader && go tool air",
     "cd services/dashboard && npm run dev",
     "cd services/dashboard/web-ui && npm run dev",
@@ -290,7 +290,9 @@ finally {
     Write-Host "`n[dev] cleaning up local development containers..." -ForegroundColor Yellow
     docker stop rmq-dev db-dev seaweedfs-dev | Out-Null
     docker rm rmq-dev db-dev seaweedfs-dev | Out-Null
+    Remove-Item Env:BACKEND_CONFIG_PATH -ErrorAction SilentlyContinue
     Write-Host "[dev] backend sandbox containers removed successfully." -ForegroundColor Green
+
 }
 
 # block script exit loop to continuously monitor the execution boundary state
