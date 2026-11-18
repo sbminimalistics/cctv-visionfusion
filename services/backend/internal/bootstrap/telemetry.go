@@ -6,19 +6,15 @@ import (
 	"os"
 	"time"
 
-	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
-	"sbminimalistics.com/cctv-visionfusion/internal/messaging"
 )
 
 type traceHandler struct {
 	slog.Handler
 }
-
-var logServiceName string
 
 func (h *traceHandler) Handle(ctx context.Context, r slog.Record) error {
 	if spanCtx := trace.SpanContextFromContext(ctx); spanCtx.HasTraceID() {
@@ -28,7 +24,6 @@ func (h *traceHandler) Handle(ctx context.Context, r slog.Record) error {
 }
 
 func InitTelemetry(serviceName string) func() {
-	logServiceName = serviceName
 	tp := sdktrace.NewTracerProvider()
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
@@ -47,15 +42,4 @@ func InitTelemetry(serviceName string) func() {
 			slog.Error("failed to flush telemetry on shutdown", "error", err)
 		}
 	}
-}
-
-// ExtractDeliveryContext reads traceparent from AMQP headers and starts a child span.
-func ExtractDeliveryContext(parentCtx context.Context, delivery amqp.Delivery, spanName string) (context.Context, trace.Span) {
-	headers := delivery.Headers
-	if headers == nil {
-		headers = amqp.Table{}
-	}
-
-	ctx := otel.GetTextMapPropagator().Extract(parentCtx, messaging.AMQPHeaderCarrier(headers))
-	return otel.Tracer(logServiceName).Start(ctx, spanName)
 }

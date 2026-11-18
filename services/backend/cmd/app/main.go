@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -53,34 +54,27 @@ func main() {
 		slog.Error("RabbitMQ connection failed to initialize", "error", err)
 	} else {
 		slog.Info("RabbitMQ transport connection pipeline live.")
-		ch, err := rmqClient.Consume(ctx, config.Config.RabbitMQ.QueueDetectionsCompleted, "downloader")
+		defer rmqClient.Close()
 
-		if err != nil {
-			slog.Error("call for consume failed", "error", err)
-		}
-
-		wg.Go(func() {
-		messageReadLoop:
-			for {
-				select {
-				case <-ctx.Done():
-					break messageReadLoop
-				case src := <-ch:
-					slog.Info("RabbitMQ message received")
-					err := rmqClient.Ack(src.DeliveryTag, false)
-					if err != nil {
-						continue
-					}
-					var msg downloads.DownloadInstruction
-					proto.Unmarshal(src.Body, &msg)
-					if src.Body == nil {
-						continue
-					}
+		err := rmqClient.StartConsumer(
+			ctx,
+			&wg,
+			config.Config.RabbitMQ.QueueDetectionsCompleted,
+			"cctv-BE",
+			func(msgCtx context.Context, body []byte) error {
+				var msg downloads.DownloadInstruction
+				if err := proto.Unmarshal(body, &msg); err != nil {
+					return fmt.Errorf("proto unmarshal failed: %w", err)
 				}
-			}
-		})
+				slog.InfoContext(msgCtx, "detection result received")
+				// pass msgCtx & msg to your service layer
+				return nil
+			},
+		)
+		if err != nil {
+			slog.Error("failed to start consumer", "error", err)
+		}
 	}
-	defer rmqClient.Close()
 
 	// wire controllers
 	_ = bootstrap.WireEdgeDeviceEventController(ctx, &wg, rmqClient)
