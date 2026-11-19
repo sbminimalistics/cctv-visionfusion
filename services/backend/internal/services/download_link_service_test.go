@@ -48,9 +48,9 @@ func Test_DownloadLinkService_Lifecycle(t *testing.T) {
 	})
 
 	t.Run("redeem link based on token", func(t *testing.T) {
-		link, ok := service.GetLink(token)
+		link, err := service.GetLink(t.Context(), token)
 
-		if !ok {
+		if err != nil {
 			t.Error("expected to redeem the link by using earlier created token")
 		}
 
