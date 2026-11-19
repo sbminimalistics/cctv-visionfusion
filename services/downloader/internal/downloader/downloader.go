@@ -7,15 +7,23 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"reflect"
 	"strings"
 	"sync"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/minio/minio-go/v7"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/services"
 )
+
+type pkgAnchor struct{}
+
+var pkgName = reflect.TypeOf(pkgAnchor{}).PkgPath()
 
 // Status represents the state of a single download task.
 type Status string
@@ -28,6 +36,7 @@ const (
 
 // Progress report sent back to the user via the communication channel.
 type DownloadProgress struct {
+	JobCtx      context.Context
 	EventUUID   uuid.UUID
 	SavePrefix  string
 	ObjectName  string
@@ -39,6 +48,7 @@ type DownloadProgress struct {
 
 // DownloadJob defines an individual file download task.
 type DownloadJob struct {
+	JobCtx           context.Context
 	EventUUID        uuid.UUID
 	URL              string
 	SavePrefix       string
@@ -92,11 +102,17 @@ func (r *FileDownloader) DownloadBatch(jobs []DownloadJob) {
 			for job := range jobChan {
 				// Check for context cancellation before starting a new job
 				if err := r.ctx.Err(); err != nil {
-					r.progress <- DownloadProgress{EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
+					r.progress <- DownloadProgress{
+						JobCtx:     job.JobCtx,
+						EventUUID:  job.EventUUID,
+						SavePrefix: job.SavePrefix,
+						Status:     StatusFailed,
+						Err:        err,
+					}
 					continue
 				}
 
-				r.downloadFile(r.ctx, job)
+				r.downloadFile(job)
 			}
 		}()
 	}
@@ -109,26 +125,37 @@ func (r *FileDownloader) DownloadBatch(jobs []DownloadJob) {
 }
 
 // downloadFile performs the actual HTTP GET request and file persistence.
-func (fd *FileDownloader) downloadFile(ctx context.Context, job DownloadJob) {
-	// fmt.Println("downloadFile", job)
-	fd.progress <- DownloadProgress{EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusStarted}
+func (fd *FileDownloader) downloadFile(job DownloadJob) {
+	var tracer = otel.Tracer(pkgName)
+
+	eventCtx, span := tracer.Start(
+		job.JobCtx,
+		"downloader.job.progress",
+		trace.WithAttributes(
+			attribute.String("event_id", job.EventUUID.String()),
+		),
+	)
+	defer span.End()
+
+	fd.progress <- DownloadProgress{JobCtx: eventCtx, EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusStarted}
 
 	// build the HTTP request to support context cancellation midway
-	req, err := http.NewRequestWithContext(ctx, "GET", job.URL, nil)
+	req, err := http.NewRequestWithContext(eventCtx, "GET", job.URL, nil)
 	if err != nil {
-		fd.progress <- DownloadProgress{EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
+		fd.progress <- DownloadProgress{JobCtx: eventCtx, EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 
 	resp, err := fd.httpClient.Do(req)
 	if err != nil {
-		fd.progress <- DownloadProgress{EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
+		fd.progress <- DownloadProgress{JobCtx: eventCtx, EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		fd.progress <- DownloadProgress{
+			JobCtx:     eventCtx,
 			EventUUID:  job.EventUUID,
 			SavePrefix: job.SavePrefix,
 			Status:     StatusFailed,
@@ -138,43 +165,39 @@ func (fd *FileDownloader) downloadFile(ctx context.Context, job DownloadJob) {
 	}
 
 	br := bufio.NewReader(resp.Body)
-	if err != nil {
-		fd.progress <- DownloadProgress{EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
-		return
-	}
 
 	headerBytes, err := br.Peek(512)
 	if err != nil && err != io.EOF {
-		fd.progress <- DownloadProgress{EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
+		fd.progress <- DownloadProgress{JobCtx: eventCtx, EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 
 	contentType, ext, err := getTypeAndExtension(&headerBytes)
 	if err != nil {
-		fd.progress <- DownloadProgress{EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
+		fd.progress <- DownloadProgress{JobCtx: eventCtx, EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 
 	objectName := fmt.Sprintf("%s%s%s", job.SavePrefix, job.SaveBaseFilename, ext)
-	// fmt.Printf("Target Object Key: '%s'\n", objectName)
 
 	objectTags := map[string]string{
 		"processed": "false",
 	}
-	_, err = services.GetS3Service().PutObject(ctx, config.Config.Seaweed.Bucket, objectName, br, -1, minio.PutObjectOptions{
+	_, err = services.GetS3Service().PutObject(eventCtx, config.Config.Seaweed.Bucket, objectName, br, -1, minio.PutObjectOptions{
 		ContentType: contentType,
 		PartSize:    5 * 1024 * 1024, // 5MB internal buffer chunks for dynamic streaming
 		UserTags:    objectTags,
 	})
 
 	if err != nil {
-		fmt.Println("s3 save failed, error:", err, config.Config.Seaweed.Bucket)
-		fd.progress <- DownloadProgress{EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
+		// slog.ErrorContext(eventCtx, "save failed", "error", err, "seaweed_bucker", config.Config.Seaweed.Bucket)
+		fd.progress <- DownloadProgress{JobCtx: eventCtx, EventUUID: job.EventUUID, SavePrefix: job.SavePrefix, Status: StatusFailed, Err: err}
 		return
 	}
 
-	fmt.Printf("s3 save %s success\n", objectName)
+	// slog.InfoContext(eventCtx, "save success", "object_name", objectName)
 	fd.progress <- DownloadProgress{
+		JobCtx:      eventCtx,
 		EventUUID:   job.EventUUID,
 		SavePrefix:  job.SavePrefix,
 		ObjectName:  job.EventUUID.String(),

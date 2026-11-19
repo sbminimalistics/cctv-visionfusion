@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/internal/services"
 )
@@ -27,9 +28,11 @@ type RedeemVoucherResponse struct {
 }
 
 func redeemHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("redeemHandler error: %s\n", err)
+		slog.ErrorContext(ctx, "redeemHandler error", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -38,15 +41,15 @@ func redeemHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &voucher)
 
 	if err != nil {
-		log.Printf("redeemHandler unmarshal error: %s\n", err)
+		slog.ErrorContext(ctx, "redeemHandler unmarshal error", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	link, ok := services.GetDownloadLinkService().GetLink(voucher.Token)
+	link, err := services.GetDownloadLinkService().GetLink(ctx, voucher.Token)
 
-	if !ok {
-		log.Println("redeemHandler GetLink failed")
+	if err != nil {
+		slog.ErrorContext(ctx, "redeemHandler GetLink failed", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -59,10 +62,12 @@ func redeemHandler(w http.ResponseWriter, r *http.Request) {
 	contents, err := json.Marshal(&resp)
 
 	if err != nil {
-		log.Printf("redeemHandler marshal to final json error: %s\n", err)
+		slog.ErrorContext(ctx, "redeemHandler marshal to final json error", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	slog.InfoContext(ctx, "download token redeemed", "event_id", link.GetEventUUID())
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -94,9 +99,17 @@ func WireAPIServer(ctx context.Context) {
 		http.Error(w, "Not Found", http.StatusNotFound)
 	})
 
+	otelHandler := otelhttp.NewHandler(
+		mux,
+		"http-server",
+		otelhttp.WithSpanNameFormatter(func(_ string, r *http.Request) string {
+			return r.Method + " " + r.URL.Path
+		}),
+	)
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", config.Config.API.Port),
-		Handler:      mux,
+		Handler:      otelHandler,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}

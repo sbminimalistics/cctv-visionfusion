@@ -2,16 +2,19 @@ package downloader
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/config"
 )
@@ -26,7 +29,12 @@ type ResponsePacket struct {
 	EventUUID       uuid.UUID `json:"event_uuid"`
 }
 
-func ExchangeToken(apiEndpoint string, token string) (ResponsePacket, error) {
+var tokenHTTPClient = &http.Client{
+	Transport: otelhttp.NewTransport(http.DefaultTransport),
+	Timeout:   15 * time.Second,
+}
+
+func ExchangeToken(msgCtx context.Context, apiEndpoint string, token string) (ResponsePacket, error) {
 	url, err := url.JoinPath(
 		strings.Join([]string{
 			config.Config.BackendApiHost,
@@ -34,43 +42,54 @@ func ExchangeToken(apiEndpoint string, token string) (ResponsePacket, error) {
 		}, ":"),
 		apiEndpoint,
 	)
+	if err != nil {
+		slog.ErrorContext(msgCtx, "failed to build token exchange URL", "error", err)
+		return ResponsePacket{}, err
+	}
 
 	outPacket := RequestPacket{
 		Token: token,
 	}
-
 	contents, err := json.Marshal(&outPacket)
-
-	req, err := http.NewRequest("POST", url, bytes.NewReader(contents))
-
-	req.Header.Add("Content-Type", "application/json")
-
-	var client = &http.Client{
-		Transport: &http.Transport{},
-	}
-	resp, err := client.Do(req)
 	if err != nil {
-		// log.Println("token exchange error:", err)
-		fmt.Println("token exchange error:", err)
+		slog.ErrorContext(msgCtx, "failed to marshal token request", "error", err)
+		return ResponsePacket{}, err
+	}
+
+	req, err := http.NewRequestWithContext(msgCtx, "POST", url, bytes.NewReader(contents))
+	if err != nil {
+		slog.ErrorContext(msgCtx, "failed to create token exchange request", "error", err)
+		return ResponsePacket{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := tokenHTTPClient.Do(req)
+	if err != nil {
+		slog.ErrorContext(msgCtx, "token exchange HTTP request failed", "error", err)
 		return ResponsePacket{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Println("ExchangeToken token exchange response error:", err)
+		slog.ErrorContext(msgCtx, "failed reading token exchange response", "error", err)
 		return ResponsePacket{}, err
 	}
 
-	// fmt.Println("ExchangeToken body:", body)
+	if resp.StatusCode != http.StatusOK {
+		err := fmt.Errorf("unexpected status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		slog.ErrorContext(msgCtx, "token exchange rejected by backend", "status", resp.StatusCode, "error", err)
+		return ResponsePacket{}, err
+	}
+
 	var inPacket ResponsePacket
 	err = json.Unmarshal(body, &inPacket)
 	if err != nil {
-		log.Println("ExchangeToken unmarshal data error:", err)
+		slog.ErrorContext(msgCtx, "failed unmarshaling token exchange response", "error", err)
 		return ResponsePacket{}, err
 	}
 
-	// fmt.Println("ExchangeToken token exchanged to:", string(body))
+	slog.DebugContext(msgCtx, "ExchangeToken token exchanged", "exchanged_to", string(body))
 
 	return inPacket, nil
 }

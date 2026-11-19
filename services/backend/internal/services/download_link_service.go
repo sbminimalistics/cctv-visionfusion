@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -53,7 +54,7 @@ type DownloadLinkService struct {
 	links []LinkWithExpiry
 }
 
-func (r *DownloadLinkService) GetLink(token uuid.UUID) (LinkWithExpiry, bool) {
+func (r *DownloadLinkService) GetLink(ctx context.Context, token uuid.UUID) (LinkWithExpiry, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	for idx, link := range r.links {
@@ -61,10 +62,10 @@ func (r *DownloadLinkService) GetLink(token uuid.UUID) (LinkWithExpiry, bool) {
 			copy(r.links[idx:], r.links[idx+1:])
 			r.links[len(r.links)-1] = LinkWithExpiry{}
 			r.links = r.links[:len(r.links)-1]
-			return link, true
+			return link, nil
 		}
 	}
-	return LinkWithExpiry{}, false
+	return LinkWithExpiry{}, errors.New("link not found")
 }
 
 func (r *DownloadLinkService) GetNewToken(url, destPath string, eventUUID uuid.UUID) (uuid.UUID, time.Time, error) {

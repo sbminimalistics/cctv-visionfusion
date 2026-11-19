@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.opentelemetry.io/otel"
 )
 
 type RMQClient struct {
@@ -18,6 +20,10 @@ type RMQClient struct {
 	mu       sync.RWMutex
 	isClosed bool
 }
+
+type AMQPHeaderCarrier amqp.Table
+
+type MessageHandler func(ctx context.Context, body []byte) error
 
 // NewRMQClient initializes the client structure configuration
 func NewRMQClient(user, password, host string, port int, vhost string) *RMQClient {
@@ -86,7 +92,11 @@ func (r *RMQClient) Publish(ctx context.Context, exchangeName, routingKey string
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	headers := amqp.Table{}
+	otel.GetTextMapPropagator().Inject(ctx, AMQPHeaderCarrier(headers))
+
 	if r.ch == nil || r.conn.IsClosed() {
+		slog.ErrorContext(ctx, "failed to publish message", "routing_key", routingKey, "reason", "client disconnected")
 		return fmt.Errorf("cannot publish message: rabbitmq client is disconnected")
 	}
 
@@ -97,6 +107,7 @@ func (r *RMQClient) Publish(ctx context.Context, exchangeName, routingKey string
 		false,        // Immediate flag
 		amqp.Publishing{
 			ContentType:  "application/json",
+			Headers:      headers,
 			DeliveryMode: amqp.Persistent, // Forces message persistence across broker restarts
 			Body:         body,
 			Timestamp:    time.Now(),
@@ -109,12 +120,12 @@ func (r *RMQClient) Publish(ctx context.Context, exchangeName, routingKey string
 	return nil
 }
 
-// listen
 func (r *RMQClient) Consume(ctx context.Context, queueName, consumer string) (<-chan amqp.Delivery, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	if r.ch == nil || r.conn.IsClosed() {
+		slog.ErrorContext(ctx, "failed to consume queue", "queue_name", queueName, "reason", "client disconnected")
 		return nil, fmt.Errorf("cannot hook into queue")
 	}
 
@@ -139,6 +150,61 @@ func (r *RMQClient) Ack(tag uint64, multiple bool) error {
 	return r.ch.Ack(tag, multiple)
 }
 
+func (r *RMQClient) Nack(tag uint64, multiple bool, requeue bool) error {
+	return r.ch.Nack(tag, multiple, requeue)
+}
+
+func (r *RMQClient) StartConsumer(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	queueName string,
+	consumerTag string,
+	handler MessageHandler,
+) error {
+	deliveries, err := r.Consume(ctx, queueName, consumerTag)
+	if err != nil {
+		return err
+	}
+
+	wg.Go(func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case d, ok := <-deliveries:
+				if !ok {
+					slog.WarnContext(ctx, "rabbitmq deliveries channel closed", "queue", queueName)
+					return
+				}
+				r.processDelivery(ctx, queueName, d, handler)
+			}
+		}
+	})
+
+	return nil
+}
+
+func (r *RMQClient) processDelivery(ctx context.Context, queueName string, d amqp.Delivery, handler MessageHandler) {
+	msgCtx, span := ExtractDeliveryContext(ctx, d, "process-"+queueName)
+	defer span.End()
+
+	if len(d.Body) == 0 {
+		slog.WarnContext(msgCtx, "received empty rabbitmq message, discarding", "queue", queueName)
+		_ = r.Nack(d.DeliveryTag, false, false) // false = do not requeue poison/empty message
+		return
+	}
+
+	if err := handler(msgCtx, d.Body); err != nil {
+		slog.ErrorContext(msgCtx, "failed to process rabbitmq message", "queue", queueName, "error", err)
+		_ = r.Nack(d.DeliveryTag, false, false) // send to DLQ / drop instead of infinite requeue loop
+		return
+	}
+
+	if err := r.Ack(d.DeliveryTag, false); err != nil {
+		slog.ErrorContext(msgCtx, "failed to ack rabbitmq message", "queue", queueName, "error", err)
+	}
+}
+
 // Close gracefully tears down the network channels and sockets
 func (r *RMQClient) Close() {
 	r.mu.Lock()
@@ -150,4 +216,23 @@ func (r *RMQClient) Close() {
 	if r.conn != nil {
 		r.conn.Close()
 	}
+}
+
+func (c AMQPHeaderCarrier) Get(key string) string {
+	if val, ok := c[key]; ok {
+		return fmt.Sprint(val)
+	}
+	return ""
+}
+
+func (c AMQPHeaderCarrier) Set(key, val string) {
+	c[key] = val
+}
+
+func (c AMQPHeaderCarrier) Keys() []string {
+	keys := make([]string, 0, len(c))
+	for k := range c {
+		keys = append(keys, k)
+	}
+	return keys
 }

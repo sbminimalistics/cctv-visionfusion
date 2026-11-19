@@ -142,7 +142,7 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 
 						bytes, _ := proto.Marshal(instruction)
 						c.rmqClient.Publish(
-							ctx,
+							eventCtx,
 							"requests.download.screenshot",
 							routingKey,
 							bytes,

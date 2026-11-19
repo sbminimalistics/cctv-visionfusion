@@ -14,7 +14,7 @@ import (
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/internal/db"
 	"sbminimalistics.com/cctv-visionfusion/internal/messaging"
-	"sbminimalistics.com/cctv-visionfusion/proto/downloads"
+	"sbminimalistics.com/cctv-visionfusion/proto/detections"
 )
 
 func main() {
@@ -62,12 +62,11 @@ func main() {
 			config.Config.RabbitMQ.QueueDetectionsCompleted,
 			"cctv-BE",
 			func(msgCtx context.Context, body []byte) error {
-				var msg downloads.DownloadInstruction
+				var msg detections.DetectionCompletedEvent
 				if err := proto.Unmarshal(body, &msg); err != nil {
 					return fmt.Errorf("proto unmarshal failed: %w", err)
 				}
-				slog.InfoContext(msgCtx, "detection result received")
-				// pass msgCtx & msg to your service layer
+				slog.InfoContext(msgCtx, "detection result received", "msq_raw", msg)
 				return nil
 			},
 		)

@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package cctv_vf;
+
+import "google/protobuf/timestamp.proto";
+
+// Go module namespace
+option go_package = "/detections";
+
+// BoundingBox represents pixel coordinates of a detected object on the analyzed frame.
+message BoundingBox {
+  int32 x_left = 1;
+  int32 y_left = 2;
+  int32 width = 3;
+  int32 height = 4;
+}
+
+// DetectedObject represents a single YOLO inference match.
+message DetectedObject {
+  int32 class_id = 1;
+  string class_name = 2;
+  float confidence = 3;
+  BoundingBox box = 4;
+}
+
+// FrameMetadata captures image dimensions and SeaweedFS location details.
+message FrameMetadata {
+  string seaweed_object_key = 1;
+  int32 image_width = 2;
+  int32 image_height = 3;
+}
+
+// DetectionCompletedEvent is published by cctv-CV after running object detection on a snapshot.
+message DetectionCompletedEvent {
+  string event_uuid = 1;
+  string model_name = 2;
+  repeated DetectedObject detections = 3;
+  FrameMetadata frame = 4;
+  google.protobuf.Timestamp processed_at = 5;
+}

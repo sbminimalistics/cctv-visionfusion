@@ -11,21 +11,31 @@ class YOLODetector:
     (with coco.names) and YOLO26 (with yolo26_config.json).
     """
 
-    def __init__(self, model_path: str, model_names_path: str, confidence_threshold: float):
+    def __init__(
+        self, model_path: str, model_names_path: str, confidence_threshold: float
+    ):
         self.model_path = model_path
         self.model_names_path = model_names_path
         self.confidence_threshold = confidence_threshold
 
         if not self.model_path or not self.model_names_path:
-            print("critical error: CV_MODEL_PATH or CV_MODEL_NAMES_PATH env variables are not set.", flush=True)
+            print(
+                "critical error: CV_MODEL_PATH or CV_MODEL_NAMES_PATH env variables are not set.",
+                flush=True,
+            )
             sys.exit(1)
 
         if not os.path.exists(self.model_path):
-            print(f"critical error: model file not found at {self.model_path}", flush=True)
+            print(
+                f"critical error: model file not found at {self.model_path}", flush=True
+            )
             sys.exit(1)
 
         if not os.path.exists(self.model_names_path):
-            print(f"critical error: names config file not found at {self.model_names_path}", flush=True)
+            print(
+                f"critical error: names config file not found at {self.model_names_path}",
+                flush=True,
+            )
             sys.exit(1)
 
         print(f"loading unified model: {self.model_path}", flush=True)
@@ -33,7 +43,7 @@ class YOLODetector:
 
         # dynamically parse labels based on the file type (.json vs standard text list)
         self.names = {}
-        if self.model_names_path.lower().endswith('.json'):
+        if self.model_names_path.lower().endswith(".json"):
             with open(self.model_names_path, "r") as f:
                 config_data = json.load(f)
             id2label = config_data.get("id2label", {})
@@ -49,11 +59,20 @@ class YOLODetector:
             self.model_path, providers=["CPUExecutionProvider"]
         )
 
+        meta = self.session.get_modelmeta()
+        self.model_name = (
+            meta.custom_metadata_map.get("model")
+            or meta.custom_metadata_map.get("description")
+            or Path(model_path).stem
+        )
+
         # extract graph requirements dynamically
         self.input_name = self.session.get_inputs()[0].name
         self.output_names = [out.name for out in self.session.get_outputs()]
 
-    def detect(self, frame: np.ndarray, confidence_threshold: float | None = None) -> list:
+    def detect(
+        self, frame: np.ndarray, confidence_threshold: float | None = None
+    ) -> list:
         """Runs object detection on the provided frame, adapting structure dynamically
         based on how the ONNX graph builds its output nodes.
         """
@@ -71,9 +90,7 @@ class YOLODetector:
         input_tensor = np.expand_dims(input_img, axis=0)
 
         # execute Graph Model Inference
-        outputs = self.session.run(
-            self.output_names, {self.input_name: input_tensor}
-        )
+        outputs = self.session.run(self.output_names, {self.input_name: input_tensor})
         parsed_results = []
 
         # FORMAT A: End-to-End Packed Matrix (e.g. yolov10s.onnx outputs 1 single tensor array)

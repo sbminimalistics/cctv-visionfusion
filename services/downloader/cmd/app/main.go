@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"path"
@@ -10,6 +11,7 @@ import (
 	"syscall"
 
 	"google.golang.org/protobuf/proto"
+	"sbminimalistics.com/cctv-visionfusion/downloader/internal/bootstrap"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/downloader"
 	"sbminimalistics.com/cctv-visionfusion/downloader/internal/mappers"
@@ -19,9 +21,9 @@ import (
 )
 
 func main() {
-	fmt.Println("starting CCTV VisionFusion downloader ...")
+	defer bootstrap.InitTelemetry("cctv-DWNLDR")()
 
-	fmt.Println("backend host:", config.Config.BackendApiHost, "port:", config.Config.BackendApiPort)
+	slog.Info("starting CCTV VisionFusion downloader", "backend_host", config.Config.BackendApiHost, "port", config.Config.BackendApiPort)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -43,16 +45,54 @@ func main() {
 	dl := downloader.NewFileDownloader(ctx, 2)
 	progress := dl.GetProgress()
 
-	fmt.Println("connecting to RabbitMQ broker instance...")
+	slog.Info("connecting to RabbitMQ broker instance...")
 	if err := rmqClient.Connect(); err != nil {
-		fmt.Printf("RabbitMQ connection failed to initialize: %v", err)
+		slog.Error("RabbitMQ connection failed to initialize", "error", err)
 	} else {
-		fmt.Println("RabbitMQ transport connection pipeline live.")
+		slog.Info("RabbitMQ transport connection pipeline live.")
+		defer rmqClient.Close()
 
-		ch, err := rmqClient.Consume(ctx, config.Config.RabbitMQQueue, "downloader")
+		err := rmqClient.StartConsumer(
+			ctx,
+			&wg,
+			config.Config.RabbitMQQueue,
+			"cctv-DWNLDR",
+			func(msgCtx context.Context, body []byte) error {
+				var msg downloads.DownloadInstruction
+				if err := proto.Unmarshal(body, &msg); err != nil {
+					return fmt.Errorf("proto unmarshal failed: %w", err)
+				}
+				slog.InfoContext(msgCtx, "download request received")
+
+				data, err := downloader.ExchangeToken(msgCtx, msg.RedeemPath, msg.Token)
+				if err != nil {
+				} else {
+					savePrefix := path.Join(
+						config.Config.PathPrefix,
+						data.DestinationPath,
+					) + "/"
+					dl.DownloadBatch([]downloader.DownloadJob{
+						{
+							JobCtx:           msgCtx,
+							EventUUID:        data.EventUUID,
+							URL:              data.PictureURL,
+							SavePrefix:       savePrefix,
+							SaveBaseFilename: data.EventUUID.String(),
+						},
+					})
+				}
+
+				return nil
+			},
+		)
+		if err != nil {
+			slog.Error("failed to start consumer", "error", err)
+		}
+
+		/* ch, err := rmqClient.Consume(ctx, config.Config.RabbitMQQueue, "downloader")
 
 		if err != nil {
-			fmt.Printf("call for consume failed: %w", err)
+			slog.Error("call for consume failed", "error", err)
 		}
 
 		wg.Add(1)
@@ -92,9 +132,8 @@ func main() {
 					}
 				}
 			}
-		}()
+		}() */
 	}
-	defer rmqClient.Close()
 
 	// listen to the progress reports over the channel
 downloaderProgressLoop:
@@ -106,32 +145,32 @@ downloaderProgressLoop:
 		case update := <-progress:
 			switch update.Status {
 			case downloader.StatusStarted:
-				fmt.Printf("started downloading: %s\n", update.EventUUID)
+				slog.InfoContext(update.JobCtx, "started downloading", "event_id", update.EventUUID.String())
 
 			case downloader.StatusCompleted:
-				fmt.Printf("finished downloading: %s saved to %s\n", update.EventUUID, update.SavePrefix)
+				slog.InfoContext(update.JobCtx, "finished downloading", "event_id", update.EventUUID, "saved_to", update.SavePrefix)
 
 				msg := mappers.DownloadProgressToProto(update)
 				bytes, _ := proto.Marshal(msg)
 
-				err := rmqClient.Publish(ctx,
+				err := rmqClient.Publish(update.JobCtx,
 					"downloads.requests.complete",
 					"downloads.complete",
 					bytes,
 				)
 				if err != nil {
-					fmt.Println("message publication failed:", err)
+					slog.ErrorContext(update.JobCtx, "message publication failed", "error", err)
 				}
 
 			case downloader.StatusFailed:
-				fmt.Printf("failed downloading %s: %v\n", update.EventUUID, update.Err)
+				slog.ErrorContext(update.JobCtx, "failed downloading", "event_id", update.EventUUID, "error", update.Err)
 			}
 		}
 	}
 
 	<-ctx.Done()
-	fmt.Println("shutdown initiated, waiting for edge streams to exit...")
+	slog.Info("shutdown initiated, waiting for edge streams to exit...")
 
 	wg.Wait()
-	fmt.Println("closing infrastructure...")
+	slog.Info("closing infrastructure...")
 }
