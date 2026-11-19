@@ -11,10 +11,12 @@ import (
 
 type pkgAnchor struct{}
 
-var tracer = otel.Tracer(reflect.TypeOf(pkgAnchor{}).PkgPath())
+var pkgName = reflect.TypeOf(pkgAnchor{}).PkgPath()
 
 // ExtractDeliveryContext reads traceparent from AMQP headers and starts a child span.
 func ExtractDeliveryContext(parentCtx context.Context, delivery amqp.Delivery, spanName string) (context.Context, trace.Span) {
+	var tracer = otel.Tracer(pkgName)
+
 	headers := delivery.Headers
 	if headers == nil {
 		headers = amqp.Table{}

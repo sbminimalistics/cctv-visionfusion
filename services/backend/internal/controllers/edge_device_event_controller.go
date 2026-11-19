@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/internal/edge_device"
@@ -17,6 +21,8 @@ import (
 	"sbminimalistics.com/cctv-visionfusion/internal/messaging"
 	"sbminimalistics.com/cctv-visionfusion/internal/services"
 )
+
+type pkgAnchor struct{}
 
 type TrafficSource struct {
 	SourceID        string
@@ -37,6 +43,8 @@ type EdgeDeviceEventController struct {
 	incomingCompositionEvents chan event.CompositionTriggerEvent
 	compositions              map[string]*event.EventComposition
 }
+
+var pkgName = reflect.TypeOf(pkgAnchor{}).PkgPath()
 
 func NewDeviceEventController(rmq *messaging.RMQClient, parentWG *sync.WaitGroup) *EdgeDeviceEventController {
 	var controller = EdgeDeviceEventController{
@@ -61,6 +69,8 @@ func (c *EdgeDeviceEventController) RegisterEventComposition(composition *event.
 }
 
 func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing []config.Route) {
+	var tracer = otel.Tracer(pkgName)
+
 	c.wg.Add(1)
 	go func() {
 		defer c.wg.Done()
@@ -82,7 +92,18 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 						c.rmqClient.Publish(ctx, route.DestinationExchange, routingKey, bytes)
 					}
 				}
-			case ev := <-c.incomingEvents:
+			case ev, ok := <-c.incomingEvents:
+				if !ok {
+					return
+				}
+				eventCtx, span := tracer.Start(
+					ev.Ctx,
+					"controller.event.handling",
+					trace.WithAttributes(
+						attribute.String("device_id", ev.DeviceID),
+						attribute.String("event_id", ev.GetUUID().String()),
+					),
+				)
 				for _, comp := range c.compositions {
 					comp.TrackEvent(ev)
 				}
@@ -95,9 +116,9 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 						deviceEvent := mappers.DeviceEventToProto(ev)
 						bytes, err := proto.Marshal(deviceEvent)
 						if err != nil {
-							slog.Error("failed marshaling proto.Message", "error", err)
+							slog.ErrorContext(eventCtx, "failed marshaling proto.Message", "error", err)
 						}
-						c.rmqClient.Publish(ctx, route.DestinationExchange, routingKey, bytes)
+						c.rmqClient.Publish(eventCtx, route.DestinationExchange, routingKey, bytes)
 					}
 				}
 
@@ -110,7 +131,7 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 					)
 
 					if err != nil {
-						slog.Error("token generation failed", "error", err)
+						slog.ErrorContext(eventCtx, "token generation failed", "error", err)
 					} else {
 						source := mappers.DownloadInstructionBase{
 							Token:       token,
@@ -128,6 +149,14 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 						)
 					}
 				}
+
+				slog.InfoContext(eventCtx, "handled edge device event",
+					"device_id", ev.DeviceID,
+					"event_id", ev.GetUUID().String(),
+					"event_type", ev.Parsed.GetEventType(),
+				)
+
+				span.End()
 			}
 		}
 	}()

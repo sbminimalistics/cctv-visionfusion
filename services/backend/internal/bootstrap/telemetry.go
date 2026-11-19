@@ -23,6 +23,14 @@ func (h *traceHandler) Handle(ctx context.Context, r slog.Record) error {
 	return h.Handler.Handle(ctx, r)
 }
 
+func (h *traceHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &traceHandler{Handler: h.Handler.WithAttrs(attrs)}
+}
+
+func (h *traceHandler) WithGroup(name string) slog.Handler {
+	return &traceHandler{Handler: h.Handler.WithGroup(name)}
+}
+
 func InitTelemetry(serviceName string) func() {
 	tp := sdktrace.NewTracerProvider()
 	otel.SetTracerProvider(tp)

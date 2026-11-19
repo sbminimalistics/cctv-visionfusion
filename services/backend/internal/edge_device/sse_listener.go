@@ -4,21 +4,27 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"mime"
 	"mime/multipart"
 	"net"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
 )
+
+type pkgAnchor struct{}
 
 type DeviceEventType string
 
 type EventPacket struct {
+	Ctx                 context.Context
 	uuid                uuid.UUID
 	absolutePicturePath string
 	DeviceID            string
@@ -26,6 +32,8 @@ type EventPacket struct {
 	Raw                 []byte
 	Parsed              BasicParsedMessage
 }
+
+var pkgName = reflect.TypeOf(pkgAnchor{}).PkgPath()
 
 func (r *EventPacket) GetUUID() uuid.UUID {
 	return r.uuid
@@ -113,6 +121,8 @@ func (r *SSEListener) ConnectAndRetryForever(ctx context.Context, deviceConfig c
 }
 
 func (r *SSEListener) readAlertStream(ctx context.Context, resp *http.Response) error {
+	var tracer = otel.Tracer(pkgName)
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -137,18 +147,27 @@ func (r *SSEListener) readAlertStream(ctx context.Context, resp *http.Response) 
 			return fmt.Errorf("[SSE] error navigating boundary tracking layer: %w", err)
 		}
 
+		eventID, _ := uuid.NewV7()
+		eventCtx, span := tracer.Start(
+			ctx,
+			"edge.alert.received",
+			trace.WithNewRoot(),
+			trace.WithAttributes(
+				attribute.String("device_id", r.DeviceID),
+				attribute.String("event_id", eventID.String()),
+			),
+		)
+
 		data, err := io.ReadAll(part)
 		part.Close()
 		if err != nil {
-			log.Printf("[SSE] frame extraction failed on camera %s: %v\n", r.DeviceID, err)
+			slog.WarnContext(eventCtx, "[SSE] frame extraction failed", "device_id", r.DeviceID, "error", err)
+			span.End()
 			continue
 		}
 
-		if data == nil {
-			continue
-		}
-
-		if r.parser == nil {
+		if data == nil || r.parser == nil {
+			span.End()
 			continue
 		}
 
@@ -158,9 +177,8 @@ func (r *SSEListener) readAlertStream(ctx context.Context, resp *http.Response) 
 			slog.Warn("[SSE] error parsing packet", "error", err)
 		}
 
-		eventID, _ := uuid.NewV7()
-
 		var packet = EventPacket{
+			Ctx:  eventCtx,
 			uuid: eventID,
 			absolutePicturePath: fmt.Sprintf(
 				"%s://%s:%s@%s:%d%s",
@@ -178,10 +196,13 @@ func (r *SSEListener) readAlertStream(ctx context.Context, resp *http.Response) 
 		}
 
 		if r.events != nil {
+			slog.InfoContext(eventCtx, "[SSE] device event queued", "device_id", r.DeviceID, "event_id", eventID.String())
 			r.events <- packet
 		} else {
-			slog.Warn("[SSE] device data dropped, listener not registered to controller yet", "device_id", r.DeviceID)
+			slog.WarnContext(eventCtx, "[SSE] device data dropped, listener not registered to controller yet", "device_id", r.DeviceID)
 		}
+
+		span.End()
 	}
 }
 
