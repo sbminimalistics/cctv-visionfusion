@@ -192,6 +192,7 @@ docker run -d --name db-dev `
   -e "POSTGRES_DB=${dbName}" `
   -e "POSTGRES_USER=${env:DB_ADMIN_USER}" `
   -e "POSTGRES_PASSWORD=${env:DB_ADMIN_PASS}" `
+  -v cctv-vf-dev-pgdata:/var/lib/postgresql/data `
   -v "${initSqlPath}:/docker-entrypoint-initdb.d/init-multi-user.sql:ro" `
   postgres:16-alpine
 

@@ -86,6 +86,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${dashboardSchema}
             -e "POSTGRES_PASSWORD=${env:DB_ADMIN_PASS}" `
             -e POSTGRES_DB=$env:DB_NAME `
             -p "${env:DB_PORT}:5432" `
+            -v cctv-vf-dev-pgdata:/var/lib/postgresql/data `
             -v "${initSqlPath}:/docker-entrypoint-initdb.d/init-multi-user.sql:ro" `
             postgres:16-alpine | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "failed to start temporary db-dev container" }
