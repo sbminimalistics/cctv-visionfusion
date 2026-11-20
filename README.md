@@ -63,7 +63,16 @@ PS C:\cctv-visionfusion> powershell scripts/dev.ps1
 
 before you deploy: create secret.tfvars and fill it with values for sensitive terraform variables
 
+### With locally built images
+
 ```powershell
-PS C:\cctv-visionfusion\deployments\terraform> terraform init
-PS C:\cctv-visionfusion\deployments\terraform> terraform apply -var-file="secret.tfvars"
+PS C:\cctv-visionfusion\deployments\terraform\local-build> terraform init
+PS C:\cctv-visionfusion\deployments\terraform\local-build> terraform apply -var-file="secret.tfvars"
+```
+
+### With prebuilt images from GHCR
+
+```powershell
+PS C:\cctv-visionfusion\deployments\terraform\ci-prebuilt> terraform init
+PS C:\cctv-visionfusion\deployments\terraform\ci-prebuilt> terraform apply -var-file="secret.tfvars"
 ```
