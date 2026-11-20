@@ -43,7 +43,7 @@ func init() {
 	if err != nil {
 		fmt.Println("Environment variable sync error:", err)
 	} else {
-		fmt.Println("Configuration successfully synchronized across all layers!")
+		fmt.Println("cleanenv finished parsing")
 	}
 
 	Config = config
