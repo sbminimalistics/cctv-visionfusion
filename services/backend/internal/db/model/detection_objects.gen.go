@@ -9,7 +9,7 @@ const TableNameDetectionObject = "detection_objects"
 // DetectionObject mapped from table <detection_objects>
 type DetectionObject struct {
 	ID          int64   `gorm:"column:id;type:bigint;primaryKey;autoIncrement:true;index:idx_detection_objects_detection_id,priority:1" json:"id"`
-	DetectionID int32   `gorm:"column:detection_id;type:integer;not null" json:"detection_id"`
+	DetectionID int64   `gorm:"column:detection_id;type:bigint;not null" json:"detection_id"`
 	ClassID     int16   `gorm:"column:class_id;type:smallint;not null" json:"class_id"`
 	ClassName   string  `gorm:"column:class_name;type:text;not null" json:"class_name"`
 	X           int16   `gorm:"column:x;type:smallint;not null" json:"x"`

@@ -34,7 +34,7 @@ func (h *traceHandler) WithGroup(name string) slog.Handler {
 func InitTelemetry(serviceName string) func() {
 	tp := sdktrace.NewTracerProvider()
 	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(propagation.TraceContext{})
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,

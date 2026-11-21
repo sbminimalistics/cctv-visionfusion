@@ -6,6 +6,9 @@ import (
 	"log/slog"
 	"sync"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/internal/messaging"
@@ -16,14 +19,14 @@ import (
 type DetectionEventController struct {
 	rmqClient *messaging.RMQClient
 	wg        *sync.WaitGroup
-	service   *services.EventService
+	service   *services.DetectionService
 }
 
 func NewDetectionEventController(
 	ctx context.Context,
 	rmq *messaging.RMQClient,
 	parentWG *sync.WaitGroup,
-	service *services.EventService,
+	service *services.DetectionService,
 ) *DetectionEventController {
 	var controller = DetectionEventController{
 		rmqClient: rmq,
@@ -46,11 +49,24 @@ func NewDetectionEventController(
 }
 
 func (r *DetectionEventController) detectionCompletedHandler(msgCtx context.Context, body []byte) error {
+	var tracer = otel.Tracer(pkgName)
+
 	var msg detections.DetectionCompletedEvent
 	if err := proto.Unmarshal(body, &msg); err != nil {
 		return fmt.Errorf("proto unmarshal failed: %w", err)
 	}
-	slog.InfoContext(msgCtx, "detection result received", "msq_raw", &msg)
+
+	detectionCtx, span := tracer.Start(
+		msgCtx,
+		"controller.detection.handling",
+		trace.WithAttributes(
+			attribute.String("event_id", msg.GetEventUuid()),
+		),
+	)
+	defer span.End()
+	slog.InfoContext(detectionCtx, "detection result received", "msq_raw", &msg)
+
+	r.service.SaveDetections(detectionCtx, &msg)
 
 	// r.service.SaveEvent(msgCtx, msg)
 

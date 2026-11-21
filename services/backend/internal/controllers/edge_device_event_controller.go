@@ -12,6 +12,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
@@ -98,6 +99,7 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 				if !ok {
 					return
 				}
+
 				eventCtx, span := tracer.Start(
 					ev.Ctx,
 					"controller.event.handling",
@@ -106,6 +108,11 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 						attribute.String("event_id", ev.GetUUID().String()),
 					),
 				)
+
+				mDevice, _ := baggage.NewMember("device.id", ev.DeviceID)
+				bag, _ := baggage.New(mDevice)
+				eventCtx = baggage.ContextWithBaggage(eventCtx, bag)
+
 				for _, comp := range c.compositions {
 					comp.TrackEvent(ev)
 				}

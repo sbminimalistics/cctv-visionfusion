@@ -7,16 +7,18 @@ import (
 )
 
 type Store struct {
-	db         *gorm.DB
-	Events     *EventRepo
-	Detections *DetectionRepo
+	db               *gorm.DB
+	Events           *EventRepo
+	Detections       *DetectionRepo
+	DetectionObjects *DetectionObjectsRepo
 }
 
 func NewStore(gdb *gorm.DB) *Store {
 	return &Store{
-		db:         gdb,
-		Events:     &EventRepo{db: gdb},
-		Detections: &DetectionRepo{db: gdb},
+		db:               gdb,
+		Events:           &EventRepo{db: gdb},
+		Detections:       &DetectionRepo{db: gdb},
+		DetectionObjects: &DetectionObjectsRepo{db: gdb},
 	}
 }
 

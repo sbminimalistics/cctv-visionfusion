@@ -24,7 +24,7 @@ create table
 create table
     detection_objects (
         id bigserial PRIMARY KEY,
-        detection_id integer NOT NULL REFERENCES detections (id) ON DELETE CASCADE,
+        detection_id bigint NOT NULL REFERENCES detections (id) ON DELETE CASCADE,
         class_id smallint NOT NULL,
         class_name text NOT NULL,
         x smallint NOT NULL,

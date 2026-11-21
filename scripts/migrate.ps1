@@ -75,9 +75,17 @@ GRANT ALL ON SCHEMA ${dashboardSchema} TO ${dashboardUser};
 -- default privileges explicitly by SCHEMA
 ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${backendSchema} 
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${backendUser};
+ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${backendSchema}
+    GRANT USAGE, SELECT ON SEQUENCES TO ${backendUser};
 
 ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${dashboardSchema} 
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${dashboardUser};
+ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${dashboardSchema}
+    GRANT USAGE, SELECT ON SEQUENCES TO ${dashboardSchema};
+
+-- set user searrch_path
+ALTER ROLE ${backendUser} SET search_path TO ${backendSchema};
+ALTER ROLE ${dashboardUser} SET search_path TO ${dashboardSchema};
 "@
         Set-Content -Path ${initSqlPath} -Value ${sqlContent} -Encoding UTF8
 

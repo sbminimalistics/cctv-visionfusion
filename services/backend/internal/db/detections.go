@@ -16,14 +16,14 @@ type DetectionRepo struct {
 	db *gorm.DB
 }
 
-// Create inserts a new event row into PostgreSQL.
-func (r *DetectionRepo) Create(ctx context.Context, ev *model.CapturedEvent) error {
+// Create inserts a new detection row into PostgreSQL.
+func (r *DetectionRepo) Create(ctx context.Context, ev *model.Detection) error {
 	return r.db.WithContext(ctx).Create(ev).Error
 }
 
-// GetByUUID fetches a single event by its UUIDv7 primary key.
-func (r *DetectionRepo) GetByUUID(ctx context.Context, eventID uuid.UUID) (*model.CapturedEvent, error) {
-	var ev model.CapturedEvent
+// GetByID fetches a single detection by its ID primary key.
+func (r *DetectionRepo) GetByID(ctx context.Context, eventID uuid.UUID) (*model.Detection, error) {
+	var ev model.Detection
 	err := r.db.WithContext(ctx).
 		Where("id = ?", eventID).
 		First(&ev).Error
