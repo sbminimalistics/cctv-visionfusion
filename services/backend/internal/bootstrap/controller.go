@@ -10,6 +10,7 @@ import (
 	"sbminimalistics.com/cctv-visionfusion/internal/edge_device"
 	"sbminimalistics.com/cctv-visionfusion/internal/event"
 	"sbminimalistics.com/cctv-visionfusion/internal/messaging"
+	"sbminimalistics.com/cctv-visionfusion/internal/services"
 )
 
 // WireEdgeDeviceController reads config data and hooks up all inputs to the orchestrator.
@@ -17,8 +18,9 @@ func WireEdgeDeviceEventController(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	rmq *messaging.RMQClient,
+	service *services.EventService,
 ) *controllers.EdgeDeviceEventController {
-	controller := controllers.NewDeviceEventController(rmq, wg)
+	controller := controllers.NewDeviceEventController(rmq, wg, service)
 	for _, compositionConfig := range config.Config.EventCompositions {
 		c := event.NewComposition(compositionConfig)
 		controller.RegisterEventComposition(c)
@@ -56,4 +58,15 @@ func createListener(device config.EdgeDeviceConfig) *edge_device.SSEListener {
 		slog.Error("unknown edge device manufacturer", "manufacturer", device.Manufacturer)
 		return nil
 	}
+}
+
+func WireDetectionEventController(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	rmq *messaging.RMQClient,
+	service *services.EventService,
+) *controllers.DetectionEventController {
+	controller := controllers.NewDetectionEventController(ctx, rmq, wg, service)
+
+	return controller
 }

@@ -179,9 +179,17 @@ GRANT ALL ON SCHEMA ${dashboardSchema} TO ${dashboardUser};
 -- default privileges explicitly by SCHEMA
 ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${backendSchema} 
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${backendUser};
+ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${backendSchema}
+    GRANT USAGE, SELECT ON SEQUENCES TO ${backendUser};
 
 ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${dashboardSchema} 
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${dashboardUser};
+ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${dashboardSchema}
+    GRANT USAGE, SELECT ON SEQUENCES TO ${dashboardSchema};
+
+-- set user searrch_path
+ALTER ROLE ${backendUser} SET search_path TO ${backendSchema};
+ALTER ROLE ${dashboardUser} SET search_path TO ${dashboardSchema};
 "@
 Set-Content -Path ${initSqlPath} -Value ${sqlContent} -Encoding UTF8
 
@@ -197,12 +205,18 @@ docker run -d --name db-dev `
   postgres:16-alpine
 
 Write-Host "[dev] waiting for database initial setup script execution to finish..." -ForegroundColor Yellow
-while ($true) {
-    $logs = docker logs db-dev 2>&1
-    if ($logs -match "PostgreSQL init process complete; ready for start up") {
+$ready = $false
+for ($i = 0; $i -lt 30; $i++) {
+    docker exec db-dev pg_isready -U $env:DB_ADMIN_USER -d $env:DB_NAME 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        $ready = $true
         break
     }
-    Start-Sleep -Seconds 1
+    Start-Sleep -Seconds 2
+}
+
+if (-not $ready) {
+    throw "Timed out waiting for db-dev to become ready."
 }
 
 # remove temp sql file now that the init container sequence safely completed

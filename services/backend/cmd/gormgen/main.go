@@ -34,9 +34,7 @@ func main() {
 	}
 
 	g := gen.NewGenerator(gen.Config{
-		OutPath:           "internal/dal/query",
-		ModelPkgPath:      "internal/dal/model",
-		Mode:              gen.WithDefaultQuery | gen.WithQueryInterface,
+		OutPath:           "internal/db/model",
 		FieldNullable:     true, // Generates *string / *time.Time for nullable columns (like trace_id!)
 		FieldWithIndexTag: true, // Preserves index tags on struct fields
 		FieldWithTypeTag:  true, // Preserves exact SQL column types

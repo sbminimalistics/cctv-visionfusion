@@ -11,14 +11,16 @@ import (
 )
 
 // DBWrapper encapsulates the GORM instance for clean dependency injection
-type DBWrapper struct {
-	ORM *gorm.DB
-}
+type ORM *gorm.DB
 
 // Connect initializes and returns the GORM database engine
-func Connect(host string, port int, user, password, dbname string) (*DBWrapper, error) {
+func Connect(host string, port int, user, password, dbname, schema string) (ORM, error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=UTC",
 		host, user, password, dbname, port)
+
+	if schema != "" {
+		dsn = fmt.Sprintf("%s search_path=%s", dsn, schema)
+	}
 
 	slog.Info("connecting to postgres via GORM")
 
@@ -39,5 +41,5 @@ func Connect(host string, port int, user, password, dbname string) (*DBWrapper, 
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
 
-	return &DBWrapper{ORM: db}, nil
+	return db, nil
 }

@@ -52,6 +52,7 @@ type DBConfig struct {
 	Name     string `yaml:"name" env:"DB_NAME" env-default:"postgres"`
 	User     string `yaml:"user" env:"BACKEND_DB_USER" env-default:"user"`
 	Password string `yaml:"password" env:"BACKEND_DB_PASS"`
+	Schema   string `yaml:"schema" env:"BACKEND_DB_SCHEMA"`
 }
 
 type RabbitMQConfig struct {

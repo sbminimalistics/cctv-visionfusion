@@ -101,7 +101,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${dashboardSchema}
                 $ready = $true
                 break
             }
-            Start-Sleep -Seconds 1
+            Start-Sleep -Seconds 2
         }
         if (-not $ready) { throw "timed out waiting for temporary db-dev to become ready" }
 

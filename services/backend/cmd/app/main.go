@@ -2,19 +2,16 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
-	"google.golang.org/protobuf/proto"
 	"sbminimalistics.com/cctv-visionfusion/internal/bootstrap"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
 	"sbminimalistics.com/cctv-visionfusion/internal/db"
 	"sbminimalistics.com/cctv-visionfusion/internal/messaging"
-	"sbminimalistics.com/cctv-visionfusion/proto/detections"
 )
 
 func main() {
@@ -25,18 +22,22 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	// initialize db
-	_, err := db.Connect(
+	// initialize db connection
+	orm, err := db.Connect(
 		config.Config.DB.Host,
 		int(config.Config.DB.Port),
 		config.Config.DB.User,
 		config.Config.DB.Password,
 		config.Config.DB.Name,
+		config.Config.DB.Schema,
 	)
-
 	if err != nil {
 		slog.Error("db connection error", "error", err)
+		os.Exit(1)
 	}
+
+	// initialize db store
+	store := db.NewStore(orm)
 
 	var wg sync.WaitGroup
 
@@ -55,31 +56,14 @@ func main() {
 	} else {
 		slog.Info("RabbitMQ transport connection pipeline live.")
 		defer rmqClient.Close()
-
-		err := rmqClient.StartConsumer(
-			ctx,
-			&wg,
-			config.Config.RabbitMQ.QueueDetectionsCompleted,
-			"cctv-BE",
-			func(msgCtx context.Context, body []byte) error {
-				var msg detections.DetectionCompletedEvent
-				if err := proto.Unmarshal(body, &msg); err != nil {
-					return fmt.Errorf("proto unmarshal failed: %w", err)
-				}
-				slog.InfoContext(msgCtx, "detection result received", "msq_raw", msg)
-				return nil
-			},
-		)
-		if err != nil {
-			slog.Error("failed to start consumer", "error", err)
-		}
 	}
 
-	// wire controllers
-	_ = bootstrap.WireEdgeDeviceEventController(ctx, &wg, rmqClient)
-
 	// wire services
-	bootstrap.WireServices(ctx)
+	services := bootstrap.WireServices(ctx, store)
+
+	// wire controllers
+	_ = bootstrap.WireEdgeDeviceEventController(ctx, &wg, rmqClient, services.EventService)
+	_ = bootstrap.WireDetectionEventController(ctx, &wg, rmqClient, services.EventService)
 
 	// wire api enpoints
 	slog.Info("starting API", "port", config.Config.API.Port)

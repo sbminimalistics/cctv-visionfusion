@@ -4,11 +4,23 @@ import (
 	"context"
 	"log/slog"
 
+	"sbminimalistics.com/cctv-visionfusion/internal/db"
 	"sbminimalistics.com/cctv-visionfusion/internal/services"
 )
 
-func WireServices(ctx context.Context) {
+type Services struct {
+	DownloadLinkService *services.DownloadLinkService
+	EventService        *services.EventService
+}
+
+func WireServices(ctx context.Context, store *db.Store) Services {
 	slog.Info("starting download link service ...")
-	services.InitDownloadLinkService(ctx)
+	dlService := services.InitDownloadLinkService(ctx)
+	eventService := services.InitEventService(store)
 	slog.Info("services started")
+
+	return Services{
+		DownloadLinkService: dlService,
+		EventService:        eventService,
+	}
 }

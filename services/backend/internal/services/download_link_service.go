@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	DefaultLinkTTL  = time.Duration(time.Second * 30)
-	serviceInstance *DownloadLinkService
-	createOnce      sync.Once
+	DefaultLinkTTL                = time.Duration(time.Second * 30)
+	downloadLinkServiceInstance   *DownloadLinkService
+	createDownloadLinkServiceOnce sync.Once
 )
 
 type LinkWithExpiry struct {
@@ -91,22 +91,22 @@ func (r *DownloadLinkService) GetNewToken(url, destPath string, eventUUID uuid.U
 }
 
 func GetDownloadLinkService() *DownloadLinkService {
-	if serviceInstance == nil {
+	if downloadLinkServiceInstance == nil {
 		panic("DownloadLinkService requested before initialization")
 	}
-	return serviceInstance
+	return downloadLinkServiceInstance
 }
 
 func InitDownloadLinkService(ctx context.Context) *DownloadLinkService {
-	createOnce.Do(func() {
-		serviceInstance = &DownloadLinkService{
+	createDownloadLinkServiceOnce.Do(func() {
+		downloadLinkServiceInstance = &DownloadLinkService{
 			ctx:   ctx,
 			links: make([]LinkWithExpiry, 0),
 		}
 
-		go serviceInstance.startCleanupWorker()
+		go downloadLinkServiceInstance.startCleanupWorker()
 	})
-	return serviceInstance
+	return downloadLinkServiceInstance
 }
 
 func (r *DownloadLinkService) startCleanupWorker() {

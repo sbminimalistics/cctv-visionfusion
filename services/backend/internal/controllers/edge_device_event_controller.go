@@ -42,17 +42,19 @@ type EdgeDeviceEventController struct {
 	// channel for composite events (event_composition in config)
 	incomingCompositionEvents chan event.CompositionTriggerEvent
 	compositions              map[string]*event.EventComposition
+	service                   *services.EventService
 }
 
 var pkgName = reflect.TypeOf(pkgAnchor{}).PkgPath()
 
-func NewDeviceEventController(rmq *messaging.RMQClient, parentWG *sync.WaitGroup) *EdgeDeviceEventController {
+func NewDeviceEventController(rmq *messaging.RMQClient, parentWG *sync.WaitGroup, service *services.EventService) *EdgeDeviceEventController {
 	var controller = EdgeDeviceEventController{
 		rmqClient:                 rmq,
 		wg:                        parentWG,
 		incomingEvents:            make(chan edge_device.EventPacket, 100),
 		incomingCompositionEvents: make(chan event.CompositionTriggerEvent, 10),
 		compositions:              make(map[string]*event.EventComposition),
+		service:                   service,
 	}
 
 	return &controller
@@ -122,7 +124,9 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 					}
 				}
 
-				if ev.Parsed.GetEventType() == "fielddetection" {
+				// if ev.Parsed.GetEventType() == "fielddetection" {
+				if ev.Parsed.GetEventType() == "VMD" {
+					c.service.SaveEvent(eventCtx, ev)
 					now := time.Now().UTC()
 					token, expiry, err := services.GetDownloadLinkService().GetNewToken(
 						ev.GetAbsolutePicturePath(),
