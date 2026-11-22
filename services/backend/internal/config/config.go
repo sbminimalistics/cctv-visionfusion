@@ -53,6 +53,7 @@ type DBConfig struct {
 	User     string `yaml:"user" env:"BACKEND_DB_USER" env-default:"user"`
 	Password string `yaml:"password" env:"BACKEND_DB_PASS"`
 	Schema   string `yaml:"schema" env:"BACKEND_DB_SCHEMA"`
+	LogLevel string `yaml:"log_level" env:"BACKEND_DB_LOG_LEVEL"`
 }
 
 type RabbitMQConfig struct {
@@ -109,6 +110,7 @@ type AppConfig struct {
 	DB                DBConfig                 `yaml:"database"`
 	RabbitMQ          RabbitMQConfig           `yaml:"rabbitmq"`
 	API               APIConfig                `yaml:"api"`
+	LogLevel          string                   `yaml:"log_level" env:"BACKEND_LOG_LEVEL"`
 }
 
 var Config AppConfig

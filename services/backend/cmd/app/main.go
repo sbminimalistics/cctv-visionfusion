@@ -30,6 +30,7 @@ func main() {
 		config.Config.DB.Password,
 		config.Config.DB.Name,
 		config.Config.DB.Schema,
+		config.Config.DB.LogLevel,
 	)
 	if err != nil {
 		slog.Error("db connection error", "error", err)

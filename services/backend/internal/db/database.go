@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -14,7 +15,7 @@ import (
 type ORM *gorm.DB
 
 // Connect initializes and returns the GORM database engine
-func Connect(host string, port int, user, password, dbname, schema string) (ORM, error) {
+func Connect(host string, port int, user, password, dbname, schema, logLevel string) (ORM, error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=UTC",
 		host, user, password, dbname, port)
 
@@ -22,10 +23,10 @@ func Connect(host string, port int, user, password, dbname, schema string) (ORM,
 		dsn = fmt.Sprintf("%s search_path=%s", dsn, schema)
 	}
 
-	slog.Info("connecting to postgres via GORM")
+	slog.Info("connecting to postgres via GORM", "db_log_level", logLevel)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(parseGormLogLevel(logLevel)),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to postgres via GORM: %w", err)
@@ -42,4 +43,17 @@ func Connect(host string, port int, user, password, dbname, schema string) (ORM,
 	}
 
 	return db, nil
+}
+
+func parseGormLogLevel(level string) logger.LogLevel {
+	switch strings.ToLower(strings.TrimSpace(level)) {
+	case "silent":
+		return logger.Silent
+	case "error":
+		return logger.Error
+	case "info":
+		return logger.Info
+	default: // "warn" or unset
+		return logger.Warn
+	}
 }

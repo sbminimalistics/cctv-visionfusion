@@ -36,6 +36,8 @@ func (r *DetectionService) SaveDetections(ctx context.Context, data *detections.
 		return errors.New("processed data missing")
 	}
 
+	deviceID := baggage.FromContext(ctx).Member("device.id").Value()
+
 	detectRec := &model.Detection{
 		EventID:          &eventID,
 		ModelName:        data.GetModelName(),
@@ -74,16 +76,16 @@ func (r *DetectionService) SaveDetections(ctx context.Context, data *detections.
 
 		return nil
 	}); err != nil {
+
 		slog.ErrorContext(
 			ctx,
 			"failed to persist detection record",
 			"event_id", eventID,
+			"device_id", deviceID,
 			"error", err,
 		)
 		return fmt.Errorf("save detecion error: %w", err)
 	}
-
-	deviceID := baggage.FromContext(ctx).Member("device.id").Value()
 
 	slog.InfoContext(
 		ctx,

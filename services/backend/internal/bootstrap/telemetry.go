@@ -4,12 +4,14 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
+	"sbminimalistics.com/cctv-visionfusion/internal/config"
 )
 
 type traceHandler struct {
@@ -37,7 +39,7 @@ func InitTelemetry(serviceName string) func() {
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: parseLogLevel(config.Config.LogLevel),
 	})
 	logger := slog.New(&traceHandler{Handler: jsonHandler}).With("service", serviceName)
 	slog.SetDefault(logger)
@@ -49,5 +51,18 @@ func InitTelemetry(serviceName string) func() {
 		if err := tp.Shutdown(ctx); err != nil {
 			slog.Error("failed to flush telemetry on shutdown", "error", err)
 		}
+	}
+}
+
+func parseLogLevel(level string) slog.Level {
+	switch strings.ToLower(strings.TrimSpace(level)) {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "error":
+		return slog.LevelError
+	default: // "warn" or unset
+		return slog.LevelWarn
 	}
 }

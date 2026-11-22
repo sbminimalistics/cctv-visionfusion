@@ -17,8 +17,8 @@ type DetectionRepo struct {
 }
 
 // Create inserts a new detection row into PostgreSQL.
-func (r *DetectionRepo) Create(ctx context.Context, ev *model.Detection) error {
-	return r.db.WithContext(ctx).Create(ev).Error
+func (r *DetectionRepo) Create(ctx context.Context, d *model.Detection) error {
+	return r.db.WithContext(ctx).Create(d).Error
 }
 
 // GetByID fetches a single detection by its ID primary key.
