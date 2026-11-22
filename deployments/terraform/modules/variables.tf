@@ -305,3 +305,13 @@ variable "backend_config_path" {
   type        = string
   description = "backend config file path within container"
 }
+
+variable "backend_db_log_level" {
+  type        = string
+  description = "backend orm engine log level"
+}
+
+variable "backend_log_level" {
+  type        = string
+  description = "backend log level"
+}

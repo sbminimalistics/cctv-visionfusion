@@ -32,6 +32,8 @@ resource "docker_container" "backend_container" {
     "RMQ_VHOST=${var.rmq_vhost}",
     "CONFIG_PATH=/app/config.yml",
     "BACKEND_API_PORT=${var.backend_api_port}"
+    "BACKEND_DB_LOG_LEVEL=${var.backend_db_log_level}"
+    "BACKEND_LOG_LEVEL=${var.backend_log_level}"
   ]
 
   depends_on = [

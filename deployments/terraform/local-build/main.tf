@@ -66,6 +66,8 @@ module "stack" {
   downloader_save_path_prefix = var.downloader_save_path_prefix
 
   backend_config_path = var.backend_config_path
+  backend_db_log_level = var.backend_db_log_level
+  backend_log_level = var.backend_log_level
 
   depends_on=[
     terraform_data.remote_cv_build

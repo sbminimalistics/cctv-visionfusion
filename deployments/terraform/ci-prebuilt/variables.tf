@@ -281,3 +281,13 @@ variable "backend_config_path" {
   type        = string
   default     = "services/backend/config.yml"
 }
+
+variable "backend_db_log_level" {
+  type        = string
+  default     = "warn"
+}
+
+variable "backend_log_level" {
+  type        = string
+  default     = "warn"
+}
