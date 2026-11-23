@@ -116,8 +116,9 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 				if !allow {
 					slog.DebugContext(eventCtx, "edge device event suppressed (cooldown period active)")
 					continue
+				} else {
+					slog.DebugContext(eventCtx, "edge device event allowed (cooldown period inactive)")
 				}
-				slog.DebugContext(eventCtx, "allow event", "allow", allow)
 
 				mDevice, _ := baggage.NewMember("device.id", ev.DeviceID)
 				bag, _ := baggage.New(mDevice)
