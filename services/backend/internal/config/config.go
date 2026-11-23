@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"regexp"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -111,6 +112,7 @@ type AppConfig struct {
 	RabbitMQ          RabbitMQConfig           `yaml:"rabbitmq"`
 	API               APIConfig                `yaml:"api"`
 	LogLevel          string                   `yaml:"log_level" env:"BACKEND_LOG_LEVEL"`
+	EventCooldown     time.Duration            `env:"BACKEND_EVENT_COOLDOWN" env-default:"5s"`
 }
 
 var Config AppConfig

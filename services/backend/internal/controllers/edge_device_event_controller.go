@@ -44,6 +44,7 @@ type EdgeDeviceEventController struct {
 	incomingCompositionEvents chan event.CompositionTriggerEvent
 	compositions              map[string]*event.EventComposition
 	service                   *services.EventService
+	throttler                 *services.EventThrottle
 }
 
 var pkgName = reflect.TypeOf(pkgAnchor{}).PkgPath()
@@ -56,6 +57,7 @@ func NewDeviceEventController(rmq *messaging.RMQClient, parentWG *sync.WaitGroup
 		incomingCompositionEvents: make(chan event.CompositionTriggerEvent, 10),
 		compositions:              make(map[string]*event.EventComposition),
 		service:                   service,
+		throttler:                 services.NewEventThrottle(config.Config.EventCooldown),
 	}
 
 	return &controller
@@ -108,6 +110,14 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 						attribute.String("event_id", ev.GetUUID().String()),
 					),
 				)
+
+				now := time.Now().UTC()
+				allow := c.throttler.Allow(ev.DeviceID, ev.Parsed.GetEventType(), now)
+				if !allow {
+					slog.DebugContext(eventCtx, "edge device event suppressed (cooldown period active)")
+					continue
+				}
+				slog.DebugContext(eventCtx, "allow event", "allow", allow)
 
 				mDevice, _ := baggage.NewMember("device.id", ev.DeviceID)
 				bag, _ := baggage.New(mDevice)
