@@ -10,23 +10,23 @@ import { DeviceEvent, CompositionEvent } from "../proto/events";
 
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 
-const RMQ_HOST = process.env.RMQ_HOST || "localhost";
-const RMQ_PORT = process.env.RMQ_PORT || "5672";
-const RMQ_USER = process.env.DASHBOARD_RMQ_USER || "dashboard_worker";
-const RMQ_PASS = process.env.DASHBOARD_RMQ_PASS;
-const RMQ_VHOST = process.env.RMQ_VHOST || "cctv-vf";
-const RMQ_QUEUE_DASHBOARD_FEED =
-    process.env.RMQ_QUEUE_DASHBOARD_FEED || "dashboard_feed";
-const RMQ_QUEUE_DASHBOARD_TRIGGERS =
-    process.env.RMQ_QUEUE_DASHBOARD_TRIGGERS || "dashboard_triggers";
+const getEnvVar = (envVar: string): string => {
+    if (process.env[envVar] == null) {
+        console.error(`error: environment variable ${envVar} is missing`);
+        process.exit(1)
+    }
+    return process.env[envVar];
+}
+
+const RMQ_HOST = getEnvVar("RMQ_HOST");
+const RMQ_PORT = getEnvVar("RMQ_PORT");
+const RMQ_USER = getEnvVar("DASHBOARD_RMQ_USER");
+const RMQ_PASS = getEnvVar("DASHBOARD_RMQ_PASS");
+const RMQ_VHOST = getEnvVar("RMQ_VHOST");
+const RMQ_QUEUE_DASHBOARD_DEVICE_EVENTS_TRIGGERED = getEnvVar("RMQ_QUEUE_DASHBOARD_DEVICE_EVENTS_TRIGGERED");
+const RMQ_QUEUE_DASHBOARD_COMPOSITION_EVENTS_TRIGGERED = getEnvVar("RMQ_QUEUE_DASHBOARD_COMPOSITION_EVENTS_TRIGGERED");
 
 async function bootstrap() {
-    // messaging wiring
-    if (!RMQ_PASS) {
-        console.error("Error: NODE_RMQ_PASS environment variable is missing.");
-        process.exit(1);
-    }
-
     const rmqClient = new rmq();
     const opts = {
         protocol: "amqp",
@@ -38,7 +38,7 @@ async function bootstrap() {
     };
     await rmqClient.initialize(opts);
     await rmqClient.consumeFromQueue<DeviceEvent>(
-        RMQ_QUEUE_DASHBOARD_FEED,
+        RMQ_QUEUE_DASHBOARD_DEVICE_EVENTS_TRIGGERED,
         (msg) => {
             // console.log("content:", msg);
             // sseController.handleStream,
@@ -46,7 +46,7 @@ async function bootstrap() {
         DeviceEvent,
     );
     await rmqClient.consumeFromQueue<CompositionEvent>(
-        RMQ_QUEUE_DASHBOARD_TRIGGERS,
+        RMQ_QUEUE_DASHBOARD_COMPOSITION_EVENTS_TRIGGERED,
         (msg) => {
             // console.log("content:", msg);
 

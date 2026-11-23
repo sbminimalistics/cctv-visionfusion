@@ -63,6 +63,10 @@ resource "terraform_data" "remote_cv_build" {
         source      = "../../../services/cv/seaweed.py"
         destination = "/tmp/cv_build_context/seaweed.py"
     }
+    provisioner "file" {
+        source      = "../../../services/cv/telemetry.py"
+        destination = "/tmp/cv_build_context/telemetry.py"
+    }
 
     # execute the build natively on the remote machine's actual hardware
     provisioner "remote-exec" {

@@ -28,7 +28,7 @@ def load_config() -> AppConfig:
         rmq_vhost = os.getenv('RMQ_VHOST', 'cctv-vf'),
         rmq_user = os.getenv('CV_RMQ_USER', 'a'),
         rmq_pass = os.getenv('CV_RMQ_PASS', 'b'),
-        rmq_queue = os.getenv('RMQ_QUEUE_CV_FEED', 'image_refs'),
+        rmq_queue = os.getenv('RMQ_QUEUE_CV_PICTURES_DOWNLOADED', 'image_refs'),
         seaweed_host = os.getenv("SEAWEED_HOST", "localhost"),
         seaweed_port = os.getenv("SEAWEED_API_PORT", "8333"),
         seaweed_bucket = os.getenv("SEAWEED_BUCKET", "downloads"),

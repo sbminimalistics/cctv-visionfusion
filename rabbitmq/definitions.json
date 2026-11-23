@@ -54,7 +54,7 @@
   ],
   "queues": [
     {
-      "name": "dashboard_feed",
+      "name": "dashboard.device_events.triggered",
       "vhost": "cctv-vf",
       "durable": true,
       "auto_delete": false,
@@ -65,7 +65,7 @@
       }
     },
     {
-        "name": "dashboard_triggers",
+        "name": "dashboard.composition_events.triggered",
         "vhost": "cctv-vf",
         "durable": true,
         "auto_delete": false,
@@ -76,7 +76,7 @@
         }
     },
     {
-      "name": "downloader_feed",
+      "name": "downloader.downloads.requested",
       "vhost": "cctv-vf",
       "durable": true,
       "auto_delete": false,
@@ -87,7 +87,7 @@
       }
     },
     {
-      "name": "pictures_feed",
+      "name": "cv.pictures.downloaded",
       "vhost": "cctv-vf",
       "durable": true,
       "auto_delete": false,
@@ -124,7 +124,7 @@
     {
       "source": "devices.events.topic",
       "vhost": "cctv-vf",
-      "destination": "dashboard_feed",
+      "destination": "dashboard.device_events.triggered",
       "destination_type": "queue",
       "routing_key": "#",
       "arguments": {}
@@ -132,7 +132,7 @@
     {
         "source": "processor.triggers.topic",
         "vhost": "cctv-vf",
-        "destination": "dashboard_triggers",
+        "destination": "dashboard.composition_events.triggered",
         "destination_type": "queue",
         "routing_key": "#",
         "arguments": {}
@@ -140,7 +140,7 @@
     {
       "source": "requests.download.screenshot",
       "vhost": "cctv-vf",
-      "destination": "downloader_feed",
+      "destination": "downloader.downloads.requested",
       "destination_type": "queue",
       "routing_key": "#",
       "arguments": {}
@@ -148,7 +148,7 @@
     {
       "source": "downloads.requests.complete",
       "vhost": "cctv-vf",
-      "destination": "pictures_feed",
+      "destination": "cv.pictures.downloaded",
       "destination_type": "queue",
       "routing_key": "#",
       "arguments": {}

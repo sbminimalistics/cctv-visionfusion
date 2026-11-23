@@ -185,20 +185,24 @@ variable "cv_rmq_pass" {
   description = "Password for cv service"
 }
 
-variable "rmq_queue_dashboard_feed" {
+variable "rmq_queue_dashboard_device_events_triggered" {
   type        = string
 }
 
-variable "rmq_queue_dashboard_triggers" {
+variable "rmq_queue_dashboard_composition_events_triggered" {
   type        = string
   default     = null
 }
 
-variable "rmq_queue_downloader_feed" {
+variable "rmq_queue_downloader_downloads_requested" {
   type        = string
 }
 
-variable "rmq_queue_cv_feed" {
+variable "rmq_queue_cv_pictures_downloaded" {
+  type        = string
+}
+
+variable "rmq_queue_backend_detections_completed" {
   type        = string
 }
 

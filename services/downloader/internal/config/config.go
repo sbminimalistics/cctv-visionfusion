@@ -27,7 +27,7 @@ type SeaweedConfig struct {
 type AppConfig struct {
 	RabbitMQ       RabbitMQConfig `yaml:"rabbitmq"`
 	Seaweed        SeaweedConfig  `yaml:"seaweed"`
-	RabbitMQQueue  string         `env:"RMQ_QUEUE_DOWNLOADER_FEED"`
+	RabbitMQQueue  string         `env:"RMQ_QUEUE_DOWNLOADER_DOWNLOADS_REQUESTED"`
 	BackendApiHost string         `env:"BACKEND_API_HOST"`
 	BackendApiPort port           `env:"BACKEND_API_PORT"`
 	PathPrefix     string         `env:"DOWNLOADER_SAVE_PATH_PREFIX"`

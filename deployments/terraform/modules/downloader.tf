@@ -20,7 +20,7 @@ resource "docker_container" "cctv-vf_downloader_container" {
     "DOWNLOADER_SEAWEED_USER=${var.seaweed_downloader_user}",
     "DOWNLOADER_SEAWEED_PASS=${var.seaweed_downloader_pass}",
 
-    "RMQ_QUEUE_DOWNLOADER_FEED=${var.rmq_queue_downloader_feed}",
+    "RMQ_QUEUE_DOWNLOADER_DOWNLOADS_REQUESTED=${var.rmq_queue_downloader_downloads_requested}",
     "BACKEND_API_HOST=${var.backend_api_host}",
     "BACKEND_API_PORT=${var.backend_api_port}",
     "DOWNLOADER_SAVE_PATH_PREFIX=${var.downloader_save_path_prefix}"

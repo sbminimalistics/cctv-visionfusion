@@ -162,24 +162,29 @@ variable "cv_rmq_pass" {
   sensitive   = true
 }
 
-variable "rmq_queue_dashboard_feed" {
+variable "rmq_queue_dashboard_device_events_triggered" {
   type        = string
-  default     = "dashboard_feed"
+  default     = "dashboard.device_events.triggered"
 }
 
-variable "rmq_queue_dashboard_triggers" {
+variable "rmq_queue_dashboard_composition_events_triggered" {
   type        = string
-  default     = "dashboard_triggers"
+  default     = "dashboard.composition_events.triggered"
 }
 
-variable "rmq_queue_downloader_feed" {
+variable "rmq_queue_downloader_downloads_requested" {
   type        = string
-  default     = "downloader_feed"
+  default     = "downloader.downloads.requested"
 }
 
-variable "rmq_queue_cv_feed" {
+variable "rmq_queue_cv_pictures_downloaded" {
   type        = string
-  default     = "image_refs"
+  default     = "cv.pictures.downloaded"
+}
+
+variable "rmq_queue_backend_detections_completed" {
+  type        = string
+  default     = "backend.detections.completed"
 }
 
 variable "seaweed_host" {

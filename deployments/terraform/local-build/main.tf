@@ -38,10 +38,11 @@ module "stack" {
   dashboard_rmq_pass = var.dashboard_rmq_pass
   cv_rmq_user = var.cv_rmq_user
   cv_rmq_pass = var.cv_rmq_pass
-  rmq_queue_dashboard_feed = var.rmq_queue_dashboard_feed
-  rmq_queue_dashboard_triggers = var.rmq_queue_dashboard_triggers
-  rmq_queue_downloader_feed = var.rmq_queue_downloader_feed
-  rmq_queue_cv_feed = var.rmq_queue_cv_feed
+  rmq_queue_dashboard_device_events_triggered = var.rmq_queue_dashboard_device_events_triggered
+  rmq_queue_dashboard_composition_events_triggered = var.rmq_queue_dashboard_composition_events_triggered
+  rmq_queue_downloader_downloads_requested = var.rmq_queue_downloader_downloads_requested
+  rmq_queue_cv_pictures_downloaded = var.rmq_queue_cv_pictures_downloaded
+  rmq_queue_backend_detections_completed = var.rmq_queue_backend_detections_completed
 
   seaweed_downloader_user = var.seaweed_downloader_user
   seaweed_downloader_pass = var.seaweed_downloader_pass
