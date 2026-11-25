@@ -33,6 +33,11 @@ if (Test-Path $envFilePath) {
     Write-Host "[dev] warning: .env_dev file not found at project layer base" -ForegroundColor Red
 }
 
+# translate regular env values to Vite specific
+$env:VITE_BFF_HOST = $env:BFF_HOST
+$env:VITE_BFF_PORT = $env:BFF_PORT
+$env:VITE_BFF_API_PREFIX = $env:BFF_API_PREFIX
+
 Write-Host "[dev] starting local infrastructure..." -ForegroundColor Cyan
 
 Write-Host "[dev] setting up docker dev-network..." -ForegroundColor DarkCyan
@@ -278,37 +283,245 @@ Start-Sleep -Seconds 2
 
 Write-Host "[dev] launching workspace components natively..." -ForegroundColor Yellow
 
-# Build the backend command dynamically
-$backendCmd = "cd services/backend && go tool air"
+# add BACKEND_CONFIG_PATH environment variable
 if (-not [string]::IsNullOrWhiteSpace($BackendConfig)) {
     $env:BACKEND_CONFIG_PATH = $BackendConfig
 }
 
-# set execution configurations
-$concurrentArgs = @(
-    "concurrently",
-    "--names", "BE,DWNLDR,DASH,VITE,CV",
-    "--prefix-colors", "cyan,green,magenta,gray",
-    "cd services/backend && go tool air",
-    "cd services/downloader && go tool air",
-    "cd services/dashboard && npm run dev",
-    "cd services/dashboard/web-ui && npm run dev",
-    "cd services/cv && .venv\\Scripts\\watchmedo.exe auto-restart --directory=. --pattern=*.py --ignore-directories --recursive -- .\.venv\Scripts\python.exe -u main.py"
+$ErrorActionPreference = "Stop"
+$RepoRoot = $projectRootDir
+
+$Services = @(
+    @{
+        Name  = "BE"
+        Color = "Cyan"
+        Dir   = Join-Path $RepoRoot "services/backend"
+        File  = "go"
+        Args  = @("tool", "air")
+    },
+    @{
+        Name  = "DWNLDR"
+        Color = "Green"
+        Dir   = Join-Path $RepoRoot "services/downloader"
+        File  = "go"
+        Args  = @("tool", "air")
+    },
+    @{
+        Name  = "DASH"
+        Color = "Magenta"
+        Dir   = Join-Path $RepoRoot "services/dashboard"
+        File  = Join-Path $RepoRoot "services/dashboard/node_modules/.bin/tsx.cmd"
+        Args  = @("watch", "--clear-screen=false", "src/app.ts")
+    },
+    @{
+        Name  = "VITE"
+        Color = "DarkGray"
+        Dir   = Join-Path $RepoRoot "services/dashboard/web-ui"
+        File  = "node.exe"
+        Args  = @(".\node_modules\vite\bin\vite.js")
+    },
+    @{
+        Name  = "CV"
+        Color = "Yellow"
+        Dir   = Join-Path $RepoRoot "services/cv"
+        File  = Join-Path $RepoRoot "services/cv/.venv/Scripts/watchmedo.exe"
+        Args  = @(
+            "auto-restart",
+            "--directory=.",
+            "--pattern=*.py",
+            "--ignore-directories",
+            "--recursive",
+            "--",
+            ".\.venv\Scripts\python.exe",
+            "-u",
+            "main.py"
+        )
+    }
 )
 
+$Jobs = @()
+$Pids = @{}
+
+function Stop-ProcessTree {
+    param([int]$ParentPid)
+
+    $ErrorActionPreference = "SilentlyContinue"
+    $children = Get-CimInstance Win32_Process -Filter "ParentProcessId = $ParentPid"
+    foreach ($child in $children) {
+        if ($child.ProcessId) {
+            Stop-ProcessTree -ParentPid ([int]$child.ProcessId)
+        }
+    }
+    if (Get-Process -Id $ParentPid) {
+        Stop-Process -Id $ParentPid -Force
+    }
+}
+
+function Stop-AllServices {
+    # Never let a single missing PID abort the rest of shutdown or docker cleanup
+    $ErrorActionPreference = "Continue"
+    Write-Host "`n[DEV] Shutting down all services and child process trees..." -ForegroundColor Red
+
+    # 1. Kill only tracked PIDs that are still alive
+    foreach ($name in @($Pids.Keys)) {
+        $procId = $Pids[$name]
+        if (-not $procId) { continue }
+
+        $alive = Get-Process -Id $procId -ErrorAction SilentlyContinue
+        if (-not $alive) {
+            Write-Host "  Skipped $name (PID $procId already exited)" -ForegroundColor DarkGray
+            continue
+        }
+
+        Stop-ProcessTree -ParentPid $procId
+        Write-Host "  Stopped $name (PID $procId)" -ForegroundColor DarkYellow
+    }
+
+    # 2. Safety-net sweep for any detached child processes inside $RepoRoot\services\
+    $resolvedRoot = Resolve-Path $RepoRoot -ErrorAction SilentlyContinue
+    if ($resolvedRoot) {
+        $escapedRoot = [Regex]::Escape($resolvedRoot.Path)
+        $strays = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+            $_.ProcessId -ne $PID -and
+            $_.CommandLine -and
+            $_.CommandLine -match "$escapedRoot[\\/]services[\\/]"
+        }
+        foreach ($stray in $strays) {
+            Stop-Process -Id ([int]$stray.ProcessId) -Force -ErrorAction SilentlyContinue
+            Write-Host "  Cleaned detached child $($stray.Name) (PID $($stray.ProcessId))" -ForegroundColor DarkYellow
+        }
+    }
+
+    # 3. Terminate background Start-Job host processes directly so pending ReadLineAsync()
+    #    tasks don't hang Stop-Job, then remove the job objects cleanly
+    $jobHostPids = Get-CimInstance Win32_Process -Filter "ParentProcessId = $PID" -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty ProcessId
+    foreach ($jpid in $jobHostPids) {
+        Stop-Process -Id ([int]$jpid) -Force -ErrorAction SilentlyContinue
+    }
+
+    foreach ($item in $Jobs) {
+        Remove-Job -Job $item.Job -Force -ErrorAction SilentlyContinue
+    }
+}
+
 try {
-    # execute the application mesh inside the active window
-    & npx $concurrentArgs
+    foreach ($svc in $Services) {
+        $job = Start-Job -Name $svc.Name -ScriptBlock {
+            param($Dir, $File, $ProcArgs)
+
+            $psi = New-Object System.Diagnostics.ProcessStartInfo
+            $psi.FileName = $File
+            $psi.WorkingDirectory = $Dir
+            $psi.UseShellExecute = $false
+            $psi.RedirectStandardOutput = $true
+            $psi.RedirectStandardError = $true
+            $psi.CreateNoWindow = $true
+            $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+            $psi.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+
+            # copy all parent script environment variables into the child process
+            foreach ($key in $EnvMap.Keys) {
+                $psi.EnvironmentVariables[$key] = $EnvMap[$key]
+            }
+
+            $psi.Arguments = ($ProcArgs | ForEach-Object {
+                if ($_ -match '\s') { '"' + $_ + '"' } else { $_ }
+            }) -join ' '
+
+            $psi.RedirectStandardInput = $true
+            $psi.EnvironmentVariables["PYTHONUNBUFFERED"] = "1"
+            $psi.EnvironmentVariables["FORCE_COLOR"] = "1"
+
+            $proc = New-Object System.Diagnostics.Process
+            $proc.StartInfo = $psi
+            [void]$proc.Start()
+
+            $proc.StandardInput.Close()
+
+            Start-Sleep -Milliseconds 50
+            if (-not $proc.HasExited) {
+                Write-Output "__PID__:$($proc.Id)"
+            }
+
+            $outTask = $proc.StandardOutput.ReadLineAsync()
+            $errTask = $proc.StandardError.ReadLineAsync()
+
+            while (-not $proc.HasExited -or -not $outTask.IsCompleted -or -not $errTask.IsCompleted) {
+                if ($outTask.IsCompleted) {
+                    $line = $outTask.Result
+                    if ($null -ne $line) {
+                        Write-Output $line
+                        $outTask = $proc.StandardOutput.ReadLineAsync()
+                    }
+                }
+                if ($errTask.IsCompleted) {
+                    $errLine = $errTask.Result
+                    if ($null -ne $errLine) {
+                        Write-Output " $errLine"
+                        $errTask = $proc.StandardError.ReadLineAsync()
+                    }
+                }
+                Start-Sleep -Milliseconds 15
+            }
+        } -ArgumentList $svc.Dir, $svc.File, $svc.Args
+
+        $Jobs += @{ Job = $job; Name = $svc.Name; Color = $svc.Color }
+    }
+
+    # Intercept Ctrl+C cleanly so PowerShell doesn't abort the finally block mid-cleanup
+    [Console]::TreatControlCAsInput = $true
+    Write-Host "[DEV] All services started. Press Ctrl+C to stop.`n" -ForegroundColor White
+
+    while ($true) {
+        # Check for Ctrl+C keypress
+        if ([Console]::KeyAvailable) {
+            $key = [Console]::ReadKey($true)
+            if (($key.Modifiers -band [ConsoleModifiers]::Control) -and ($key.Key -eq [ConsoleKey]::C)) {
+                break
+            }
+        }
+
+        $anyRunning = $false
+        foreach ($item in $Jobs) {
+            if ($item.Job.State -eq "Running") { $anyRunning = $true }
+
+            $lines = Receive-Job -Job $item.Job -ErrorVariable jobErr -ErrorAction SilentlyContinue
+            foreach ($err in $jobErr) {
+                Write-Host "[$($item.Name) FAIL] " -ForegroundColor Red -NoNewline
+                Write-Host $err.Exception.Message
+            }
+
+            foreach ($line in $lines) {
+                if ($line -is [string] -and $line.StartsWith("__PID__:")) {
+                    $Pids[$item.Name] = [int]$line.Substring(8)
+                    Write-Host [int]$line.Substring(8)
+                    continue
+                }
+                Write-Host "[$($item.Name)] " -ForegroundColor $item.Color -NoNewline
+                Write-Host $line
+            }
+        }
+
+        if (-not $anyRunning) { break }
+        Start-Sleep -Milliseconds 50
+    }
 }
 finally {
-    # this block is guaranteed to execute by the OS, even during a Ctrl+C force-abort
+    [Console]::TreatControlCAsInput = $false
+
+    Stop-AllServices
+
     Write-Host "`n[dev] cleaning up local development containers..." -ForegroundColor Yellow
-    docker stop rmq-dev db-dev seaweedfs-dev | Out-Null
-    docker rm rmq-dev db-dev seaweedfs-dev | Out-Null
+    docker stop rmq-dev db-dev seaweedfs-dev 2>$null | Out-Null
+    docker rm rmq-dev db-dev seaweedfs-dev 2>$null | Out-Null
     Remove-Item Env:BACKEND_CONFIG_PATH -ErrorAction SilentlyContinue
     Write-Host "[dev] backend sandbox containers removed successfully." -ForegroundColor Green
 
+    exit 0
 }
+
+
 
 # block script exit loop to continuously monitor the execution boundary state
 while ($true) { 
