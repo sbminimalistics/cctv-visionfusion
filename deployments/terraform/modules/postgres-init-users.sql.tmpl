@@ -24,7 +24,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${backendSchema}
 ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${dashboardSchema} 
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${dashboardUser};
 ALTER DEFAULT PRIVILEGES FOR ROLE ${updaterUser} IN SCHEMA ${dashboardSchema}
-    GRANT USAGE, SELECT ON SEQUENCES TO ${dashboardSchema};
+    GRANT USAGE, SELECT ON SEQUENCES TO ${dashboardUser};
 
 -- set user searrch_path
 ALTER ROLE ${backendUser} SET search_path TO ${backendSchema};
