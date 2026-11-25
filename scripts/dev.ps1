@@ -52,7 +52,7 @@ if (-not (Test-Path -Path "${env:SEAWEED_HOST_PATH}")) {
 }
 
 # SeaweedFS includes a native, lightweight administration tool called 'wed' or 's3.config' 
-# We can create a config file directly on Windows host path that SeaweedFS reads!
+# we can create a config file directly on Windows host path that SeaweedFS reads!
 $s3ConfigPath = "${env:SEAWEED_HOST_PATH}\s3.json"
 $s3ConfigContent = @{
     "identities" = @(
@@ -102,7 +102,7 @@ $s3ConfigContent = @{
                 }
             )
             "actions"     = @("Admin", "Read", "Write", "List")
-            # Leaving "buckets" out completely gives this user access to ALL buckets
+            # leaving "buckets" out completely gives this user access to ALL buckets
         }
     )
 } | ConvertTo-Json -Depth 5
@@ -119,13 +119,13 @@ docker run -d --name seaweedfs-dev `
   chrislusf/seaweedfs:latest `
   server -dir=/data -s3 -s3.config=/data/s3.json -s3.allowEmptyFolder=true --lifecycle-configuration /conf/lifecycle.xml
 
-# Wait a brief moment for SeaweedFS to initialize
+# wait a brief moment for SeaweedFS to initialize
 Write-Host "[dev] Waiting for SeaweedFS to initialize..." -ForegroundColor Yellow
 Start-Sleep -Seconds 3
 
 Write-Host "[dev] creating SeaweedFS credentials and bucket..." -ForegroundColor Gray
 
-# Restart the container quickly just to pick the brand new credentials file
+# restart the container quickly just to pick the brand new credentials file
 docker restart seaweedfs-dev | Out-Null
 
 # create the bucket
@@ -265,22 +265,6 @@ Write-Host "[dev] infrastructure provisioning complete. ports are stable." -Fore
 Write-Host "[dev] waiting 2 seconds for communication ports to stabilize..." -ForegroundColor Yellow
 Start-Sleep -Seconds 2
 
-# Write-Host "[dev] building python image..." -ForegroundColor Blue
-# docker build -t opencv5-image "${PSScriptRoot}/../services/cv"
-
-# Write-Host "[dev] spinning up python container..." -ForegroundColor Blue
-# docker run --name opencv5-worker `
-# --add-host=host.docker.internal:host-gateway `
-#   --network dev-network `
-#   -e RABBITMQ_HOST=${env:RMQ_HOST} `
-#   -e RABBITMQ_PORT=${env:RMQ_PORT} `
-#   -e RABBITMQ_VHOST=${env:RMQ_VHOST} `
-#   -e RABBITMQ_QUEUE=${env:} `
-#   -e DOWNLOADER_RMQ_USER=${env:DOWNLOADER_RMQ_USER} `
-#   -e DOWNLOADER_RMQ_PASS=${env:DOWNLOADER_RMQ_PASS} `
-#   -d `
-#   opencv5-image | Out-Null
-
 Write-Host "[dev] launching workspace components natively..." -ForegroundColor Yellow
 
 # add BACKEND_CONFIG_PATH environment variable
@@ -289,42 +273,41 @@ if (-not [string]::IsNullOrWhiteSpace($BackendConfig)) {
 }
 
 $ErrorActionPreference = "Stop"
-$RepoRoot = $projectRootDir
 
 $Services = @(
     @{
         Name  = "BE"
         Color = "Cyan"
-        Dir   = Join-Path $RepoRoot "services/backend"
+        Dir   = Join-Path $projectRootDir "services/backend"
         File  = "go"
         Args  = @("tool", "air")
     },
     @{
         Name  = "DWNLDR"
         Color = "Green"
-        Dir   = Join-Path $RepoRoot "services/downloader"
+        Dir   = Join-Path $projectRootDir "services/downloader"
         File  = "go"
         Args  = @("tool", "air")
     },
     @{
         Name  = "DASH"
         Color = "Magenta"
-        Dir   = Join-Path $RepoRoot "services/dashboard"
-        File  = Join-Path $RepoRoot "services/dashboard/node_modules/.bin/tsx.cmd"
+        Dir   = Join-Path $projectRootDir "services/dashboard"
+        File  = Join-Path $projectRootDir "services/dashboard/node_modules/.bin/tsx.cmd"
         Args  = @("watch", "--clear-screen=false", "src/app.ts")
     },
     @{
         Name  = "VITE"
         Color = "DarkGray"
-        Dir   = Join-Path $RepoRoot "services/dashboard/web-ui"
+        Dir   = Join-Path $projectRootDir "services/dashboard/web-ui"
         File  = "node.exe"
         Args  = @(".\node_modules\vite\bin\vite.js")
     },
     @{
         Name  = "CV"
         Color = "Yellow"
-        Dir   = Join-Path $RepoRoot "services/cv"
-        File  = Join-Path $RepoRoot "services/cv/.venv/Scripts/watchmedo.exe"
+        Dir   = Join-Path $projectRootDir "services/cv"
+        File  = Join-Path $projectRootDir "services/cv/.venv/Scripts/watchmedo.exe"
         Args  = @(
             "auto-restart",
             "--directory=.",
@@ -358,11 +341,11 @@ function Stop-ProcessTree {
 }
 
 function Stop-AllServices {
-    # Never let a single missing PID abort the rest of shutdown or docker cleanup
+    # don't let a single missing PID abort the rest of shutdown or docker cleanup
     $ErrorActionPreference = "Continue"
     Write-Host "`n[DEV] Shutting down all services and child process trees..." -ForegroundColor Red
 
-    # 1. Kill only tracked PIDs that are still alive
+    # kill only tracked PIDs that are still alive
     foreach ($name in @($Pids.Keys)) {
         $procId = $Pids[$name]
         if (-not $procId) { continue }
@@ -377,8 +360,8 @@ function Stop-AllServices {
         Write-Host "  Stopped $name (PID $procId)" -ForegroundColor DarkYellow
     }
 
-    # 2. Safety-net sweep for any detached child processes inside $RepoRoot\services\
-    $resolvedRoot = Resolve-Path $RepoRoot -ErrorAction SilentlyContinue
+    # safety-net sweep for any detached child processes inside $projectRootDir\services\
+    $resolvedRoot = Resolve-Path $projectRootDir -ErrorAction SilentlyContinue
     if ($resolvedRoot) {
         $escapedRoot = [Regex]::Escape($resolvedRoot.Path)
         $strays = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
@@ -392,8 +375,8 @@ function Stop-AllServices {
         }
     }
 
-    # 3. Terminate background Start-Job host processes directly so pending ReadLineAsync()
-    #    tasks don't hang Stop-Job, then remove the job objects cleanly
+    # terminate background Start-Job host processes directly so pending ReadLineAsync()
+    # tasks don't hang Stop-Job, then remove the job objects cleanly
     $jobHostPids = Get-CimInstance Win32_Process -Filter "ParentProcessId = $PID" -ErrorAction SilentlyContinue |
         Select-Object -ExpandProperty ProcessId
     foreach ($jpid in $jobHostPids) {
@@ -469,12 +452,12 @@ try {
         $Jobs += @{ Job = $job; Name = $svc.Name; Color = $svc.Color }
     }
 
-    # Intercept Ctrl+C cleanly so PowerShell doesn't abort the finally block mid-cleanup
+    # intercept Ctrl+C cleanly so PowerShell doesn't abort the finally block mid-cleanup
     [Console]::TreatControlCAsInput = $true
     Write-Host "[DEV] All services started. Press Ctrl+C to stop.`n" -ForegroundColor White
 
     while ($true) {
-        # Check for Ctrl+C keypress
+        # check for Ctrl+C keypress
         if ([Console]::KeyAvailable) {
             $key = [Console]::ReadKey($true)
             if (($key.Modifiers -band [ConsoleModifiers]::Control) -and ($key.Key -eq [ConsoleKey]::C)) {
