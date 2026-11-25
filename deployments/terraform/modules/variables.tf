@@ -189,7 +189,7 @@ variable "rmq_queue_dashboard_device_events_triggered" {
   type        = string
 }
 
-variable "rmq_queue_dashboard_composition_events_triggered" {
+variable "rmq_queue_dashboard_composite_events_triggered" {
   type        = string
   default     = null
 }

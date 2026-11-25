@@ -26,14 +26,13 @@ func DeviceEventToProto(packet edge_device.EventPacket) *events.DeviceEvent {
 		Manufacturer: string(packet.Manufacturer),
 		EventType:    edge_device.BasicParsedMessage(packet.Parsed).GetEventType(),
 		EventTime:    timestamppb.Now(), // Utilizes the required Google Protobuf timestamp type
-		RawPayload:   packet.Raw,
 	}
 }
 
 // maps a domain CompositionTriggerErvent into its corresponding Protobuf structured message payload.
-func CompositionTriggerToProto(packet event.CompositionTriggerEvent) *events.CompositionEvent {
+func CompositionTriggerToProto(packet event.CompositionTriggerEvent) *events.CompositeEvent {
 	sources := toProtoSources(packet.Sources)
-	return &events.CompositionEvent{
+	return &events.CompositeEvent{
 		Uuid:      packet.GetUUID(),
 		Id:        packet.CompositionID,
 		Sources:   sources,
@@ -51,11 +50,11 @@ func DeviceInstructionToProto(src DownloadInstructionBase) *downloads.DownloadIn
 	}
 }
 
-func toProtoSources(configs []config.CompositionSourceConfig) []*events.CompositionSource {
-	protos := make([]*events.CompositionSource, len(configs))
+func toProtoSources(configs []config.CompositionSourceConfig) []*events.CompositeEventSource {
+	protos := make([]*events.CompositeEventSource, len(configs))
 
 	for i := range configs {
-		protos[i] = &events.CompositionSource{
+		protos[i] = &events.CompositeEventSource{
 			DeviceId:  configs[i].DeviceID,
 			EventType: configs[i].EventType,
 		}

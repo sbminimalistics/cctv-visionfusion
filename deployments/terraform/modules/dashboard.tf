@@ -27,7 +27,7 @@ resource "docker_container" "cctv-vf_dashboard_container" {
     "DASHBOARD_RMQ_PASS=${var.dashboard_rmq_pass}",
     "RMQ_VHOST=${var.rmq_vhost}",
     "RMQ_QUEUE_DASHBOARD_DEVICE_EVENTS_TRIGGERED=${var.rmq_queue_dashboard_device_events_triggered}",
-    "RMQ_QUEUE_DASHBOARD_COMPOSITION_EVENTS_TRIGGERED=${var.rmq_queue_dashboard_composition_events_triggered}",
+    "RMQ_QUEUE_DASHBOARD_COMPOSITE_EVENTS_TRIGGERED=${var.rmq_queue_dashboard_composite_events_triggered}",
   ]
 
   depends_on = [

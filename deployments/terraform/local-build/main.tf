@@ -39,7 +39,7 @@ module "stack" {
   cv_rmq_user = var.cv_rmq_user
   cv_rmq_pass = var.cv_rmq_pass
   rmq_queue_dashboard_device_events_triggered = var.rmq_queue_dashboard_device_events_triggered
-  rmq_queue_dashboard_composition_events_triggered = var.rmq_queue_dashboard_composition_events_triggered
+  rmq_queue_dashboard_composite_events_triggered = var.rmq_queue_dashboard_composite_events_triggered
   rmq_queue_downloader_downloads_requested = var.rmq_queue_downloader_downloads_requested
   rmq_queue_cv_pictures_downloaded = var.rmq_queue_cv_pictures_downloaded
   rmq_queue_backend_detections_completed = var.rmq_queue_backend_detections_completed

@@ -147,9 +147,9 @@ variable "rmq_queue_dashboard_device_events_triggered" {
   default     = "dashboard.device_events.triggered"
 }
 
-variable "rmq_queue_dashboard_composition_events_triggered" {
+variable "rmq_queue_dashboard_composite_events_triggered" {
   type        = string
-  default     = "dashboard.composition_events.triggered"
+  default     = "dashboard.composite_events.triggered"
 }
 
 variable "rmq_queue_downloader_downloads_requested" {

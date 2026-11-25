@@ -3,6 +3,6 @@ import { sseController } from "../controllers/sse.controller";
 
 const sseRoutes = new Hono();
 
-sseRoutes.get('/stream', sseController.handleStream)
+sseRoutes.get('/', sseController.handleStream)
 
 export { sseRoutes };

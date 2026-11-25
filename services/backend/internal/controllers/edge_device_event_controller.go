@@ -41,23 +41,23 @@ type EdgeDeviceEventController struct {
 	// channel for separate device events (edge_devices in config)
 	incomingEvents chan edge_device.EventPacket
 	// channel for composite events (event_composition in config)
-	incomingCompositionEvents chan event.CompositionTriggerEvent
-	compositions              map[string]*event.EventComposition
-	service                   *services.EventService
-	throttler                 *services.EventThrottle
+	incomingCompositeEvents chan event.CompositionTriggerEvent
+	compositions            map[string]*event.EventComposition
+	service                 *services.EventService
+	throttler               *services.EventThrottle
 }
 
 var pkgName = reflect.TypeOf(pkgAnchor{}).PkgPath()
 
 func NewDeviceEventController(rmq *messaging.RMQClient, parentWG *sync.WaitGroup, service *services.EventService) *EdgeDeviceEventController {
 	var controller = EdgeDeviceEventController{
-		rmqClient:                 rmq,
-		wg:                        parentWG,
-		incomingEvents:            make(chan edge_device.EventPacket, 100),
-		incomingCompositionEvents: make(chan event.CompositionTriggerEvent, 10),
-		compositions:              make(map[string]*event.EventComposition),
-		service:                   service,
-		throttler:                 services.NewEventThrottle(config.Config.EventCooldown),
+		rmqClient:               rmq,
+		wg:                      parentWG,
+		incomingEvents:          make(chan edge_device.EventPacket, 100),
+		incomingCompositeEvents: make(chan event.CompositionTriggerEvent, 10),
+		compositions:            make(map[string]*event.EventComposition),
+		service:                 service,
+		throttler:               services.NewEventThrottle(config.Config.EventCooldown),
 	}
 
 	return &controller
@@ -70,7 +70,7 @@ func (c *EdgeDeviceEventController) RegisterSSEListener(listener *edge_device.SS
 func (c *EdgeDeviceEventController) RegisterEventComposition(composition *event.EventComposition) {
 	id := composition.GetId()
 	c.compositions[id] = composition
-	composition.AttachChannel(c.incomingCompositionEvents)
+	composition.AttachChannel(c.incomingCompositeEvents)
 }
 
 func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing []config.Route) {
@@ -83,8 +83,8 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 			select {
 			case <-ctx.Done():
 				return
-			case cev := <-c.incomingCompositionEvents:
-				slog.Debug("composition event received", "raw_event", cev)
+			case cev := <-c.incomingCompositeEvents:
+				slog.Debug("composite event received", "raw_event", cev)
 				for _, route := range routing {
 					re := route.Source.EventTypeRegexp.Regexp
 					if route.Source.SourceID == cev.CompositionID && re.MatchString(string(cev.EventType)) {
@@ -128,7 +128,6 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 					comp.TrackEvent(ev)
 				}
 				routingKey := strings.Join([]string{"device.", ev.DeviceID, ".event"}, "")
-				// slog.Debug("<- event type:", "type", ev.Parsed.GetEventType())
 				for _, route := range routing {
 					re := route.Source.EventTypeRegexp.Regexp
 					match := re.MatchString(ev.Parsed.GetEventType())

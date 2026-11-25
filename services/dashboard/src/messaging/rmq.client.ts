@@ -1,6 +1,10 @@
 import * as amqp from "amqplib";
 import { MessageFns } from "../../proto/events";
+import { SpanStatusCode, trace } from "@opentelemetry/api";
+import { logger } from "../logger";
 // import { XMLParser } from "fast-xml-parser";
+
+const tracer = trace.getTracer("cctv-dashboard-bff");
 
 export default class RMQClient {
     private connection: amqp.ChannelModel | null = null;
@@ -68,43 +72,44 @@ export default class RMQClient {
 
             await channel.consume(
                 queueName,
-                (message) => {
+                async (message) => {
                     if (!message) {
-                        console.warn("Consumer cancelled by server interface.");
+                        console.warn("consumer cancelled by server interface");
                         return;
                     }
 
-                    try {
-                        const payloadString = message.content.toString();
-                        const routingInfo = message.fields.routingKey;
+                    await tracer.startActiveSpan(
+                        `rmq.consume.${queueName}`,
+                        async (span) => {
+                            try {
+                                const routingInfo = message.fields.routingKey;
+                                span.setAttribute(
+                                    "messaging.rabbitmq.routing_key",
+                                    routingInfo,
+                                );
+                                logger.info({queueName, routingKey: routingInfo})
 
-                        console.log(
-                            `rmq message from queue: ${queueName}, routing key: ${routingInfo}`,
-                        );
+                                const msg = msgF.decode(message.content);
+                                await onMessage(msg); // awaits async SSE broadcast before acking!
 
-                        const msg = msgF.decode(message.content);
-                        // const { rawPayload, ...msgWithoutRaw } = msg;
-                        // const { deviceId, eventType, manufacturer} = msgWithoutRaw;
-                        // const originalEvent = msg.rawPayload.toString();
-                        // const parser = new XMLParser();
-                        // const doc = parser.parse(originalEvent);
-
-                        // console.log("rmq message:", msgWithoutRaw, doc);
-                        // console.log("rmq message:", deviceId, eventType, "manufacturer:", manufacturer);
-
-                        onMessage(msg);
-
-                        channel.ack(message);
-                        // console.log(
-                        //     "Message successfully processed and Acknowledged (ACK).",
-                        // );
-                    } catch (processingError) {
-                        console.error(
-                            "Error parsing message content:",
-                            processingError,
-                        );
-                        channel.nack(message, false, true);
-                    }
+                                channel.ack(message);
+                                span.setStatus({ code: SpanStatusCode.OK });
+                            } catch (processingError) {
+                                span.recordException(processingError as Error);
+                                span.setStatus({
+                                    code: SpanStatusCode.ERROR,
+                                    message: (processingError as Error).message,
+                                });
+                                console.error(
+                                    "Error parsing message content:",
+                                    processingError,
+                                );
+                                channel.nack(message, false, false); // see note #2 below!
+                            } finally {
+                                span.end();
+                            }
+                        },
+                    );
                 },
                 { noAck: false },
             );

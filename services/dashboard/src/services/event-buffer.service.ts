@@ -1,6 +1,7 @@
 // src/services/event-buffer.service.ts
 import { EventEmitter } from 'node:events'
 import crypto from 'node:crypto'
+import { logger } from '../logger'
 
 // Define the shape of the event that will be broadcasted to SSE clients
 export interface AppEvent {

@@ -29,7 +29,6 @@ type DeviceEvent struct {
 	EventTime     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=event_time,json=eventTime,proto3" json:"event_time,omitempty"`
 	Manufacturer  string                 `protobuf:"bytes,4,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
 	EventType     string                 `protobuf:"bytes,5,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
-	RawPayload    []byte                 `protobuf:"bytes,6,opt,name=raw_payload,json=rawPayload,proto3" json:"raw_payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -99,37 +98,30 @@ func (x *DeviceEvent) GetEventType() string {
 	return ""
 }
 
-func (x *DeviceEvent) GetRawPayload() []byte {
-	if x != nil {
-		return x.RawPayload
-	}
-	return nil
-}
-
-type CompositionEvent struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Sources       []*CompositionSource   `protobuf:"bytes,3,rep,name=sources,proto3" json:"sources,omitempty"`
-	EventTime     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=event_time,json=eventTime,proto3" json:"event_time,omitempty"`
+type CompositeEvent struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	Uuid          string                  `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Id            string                  `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Sources       []*CompositeEventSource `protobuf:"bytes,3,rep,name=sources,proto3" json:"sources,omitempty"`
+	EventTime     *timestamppb.Timestamp  `protobuf:"bytes,4,opt,name=event_time,json=eventTime,proto3" json:"event_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CompositionEvent) Reset() {
-	*x = CompositionEvent{}
+func (x *CompositeEvent) Reset() {
+	*x = CompositeEvent{}
 	mi := &file_events_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CompositionEvent) String() string {
+func (x *CompositeEvent) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CompositionEvent) ProtoMessage() {}
+func (*CompositeEvent) ProtoMessage() {}
 
-func (x *CompositionEvent) ProtoReflect() protoreflect.Message {
+func (x *CompositeEvent) ProtoReflect() protoreflect.Message {
 	mi := &file_events_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -141,40 +133,40 @@ func (x *CompositionEvent) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CompositionEvent.ProtoReflect.Descriptor instead.
-func (*CompositionEvent) Descriptor() ([]byte, []int) {
+// Deprecated: Use CompositeEvent.ProtoReflect.Descriptor instead.
+func (*CompositeEvent) Descriptor() ([]byte, []int) {
 	return file_events_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CompositionEvent) GetUuid() string {
+func (x *CompositeEvent) GetUuid() string {
 	if x != nil {
 		return x.Uuid
 	}
 	return ""
 }
 
-func (x *CompositionEvent) GetId() string {
+func (x *CompositeEvent) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *CompositionEvent) GetSources() []*CompositionSource {
+func (x *CompositeEvent) GetSources() []*CompositeEventSource {
 	if x != nil {
 		return x.Sources
 	}
 	return nil
 }
 
-func (x *CompositionEvent) GetEventTime() *timestamppb.Timestamp {
+func (x *CompositeEvent) GetEventTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.EventTime
 	}
 	return nil
 }
 
-type CompositionSource struct {
+type CompositeEventSource struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	EventType     string                 `protobuf:"bytes,2,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
@@ -182,20 +174,20 @@ type CompositionSource struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CompositionSource) Reset() {
-	*x = CompositionSource{}
+func (x *CompositeEventSource) Reset() {
+	*x = CompositeEventSource{}
 	mi := &file_events_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CompositionSource) String() string {
+func (x *CompositeEventSource) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CompositionSource) ProtoMessage() {}
+func (*CompositeEventSource) ProtoMessage() {}
 
-func (x *CompositionSource) ProtoReflect() protoreflect.Message {
+func (x *CompositeEventSource) ProtoReflect() protoreflect.Message {
 	mi := &file_events_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -207,19 +199,19 @@ func (x *CompositionSource) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CompositionSource.ProtoReflect.Descriptor instead.
-func (*CompositionSource) Descriptor() ([]byte, []int) {
+// Deprecated: Use CompositeEventSource.ProtoReflect.Descriptor instead.
+func (*CompositeEventSource) Descriptor() ([]byte, []int) {
 	return file_events_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *CompositionSource) GetDeviceId() string {
+func (x *CompositeEventSource) GetDeviceId() string {
 	if x != nil {
 		return x.DeviceId
 	}
 	return ""
 }
 
-func (x *CompositionSource) GetEventType() string {
+func (x *CompositeEventSource) GetEventType() string {
 	if x != nil {
 		return x.EventType
 	}
@@ -230,7 +222,7 @@ var File_events_proto protoreflect.FileDescriptor
 
 const file_events_proto_rawDesc = "" +
 	"\n" +
-	"\fevents.proto\x12\acctv_vf\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdd\x01\n" +
+	"\fevents.proto\x12\acctv_vf\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbc\x01\n" +
 	"\vDeviceEvent\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x1b\n" +
 	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x129\n" +
@@ -238,16 +230,14 @@ const file_events_proto_rawDesc = "" +
 	"event_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\teventTime\x12\"\n" +
 	"\fmanufacturer\x18\x04 \x01(\tR\fmanufacturer\x12\x1d\n" +
 	"\n" +
-	"event_type\x18\x05 \x01(\tR\teventType\x12\x1f\n" +
-	"\vraw_payload\x18\x06 \x01(\fR\n" +
-	"rawPayload\"\xa7\x01\n" +
-	"\x10CompositionEvent\x12\x12\n" +
+	"event_type\x18\x05 \x01(\tR\teventType\"\xa8\x01\n" +
+	"\x0eCompositeEvent\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x0e\n" +
-	"\x02id\x18\x02 \x01(\tR\x02id\x124\n" +
-	"\asources\x18\x03 \x03(\v2\x1a.cctv_vf.CompositionSourceR\asources\x129\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x127\n" +
+	"\asources\x18\x03 \x03(\v2\x1d.cctv_vf.CompositeEventSourceR\asources\x129\n" +
 	"\n" +
-	"event_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\teventTime\"O\n" +
-	"\x11CompositionSource\x12\x1b\n" +
+	"event_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\teventTime\"R\n" +
+	"\x14CompositeEventSource\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1d\n" +
 	"\n" +
 	"event_type\x18\x02 \x01(\tR\teventTypeB\tZ\a/eventsb\x06proto3"
@@ -267,14 +257,14 @@ func file_events_proto_rawDescGZIP() []byte {
 var file_events_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_events_proto_goTypes = []any{
 	(*DeviceEvent)(nil),           // 0: cctv_vf.DeviceEvent
-	(*CompositionEvent)(nil),      // 1: cctv_vf.CompositionEvent
-	(*CompositionSource)(nil),     // 2: cctv_vf.CompositionSource
+	(*CompositeEvent)(nil),        // 1: cctv_vf.CompositeEvent
+	(*CompositeEventSource)(nil),  // 2: cctv_vf.CompositeEventSource
 	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 }
 var file_events_proto_depIdxs = []int32{
 	3, // 0: cctv_vf.DeviceEvent.event_time:type_name -> google.protobuf.Timestamp
-	2, // 1: cctv_vf.CompositionEvent.sources:type_name -> cctv_vf.CompositionSource
-	3, // 2: cctv_vf.CompositionEvent.event_time:type_name -> google.protobuf.Timestamp
+	2, // 1: cctv_vf.CompositeEvent.sources:type_name -> cctv_vf.CompositeEventSource
+	3, // 2: cctv_vf.CompositeEvent.event_time:type_name -> google.protobuf.Timestamp
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name

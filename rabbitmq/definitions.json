@@ -65,7 +65,7 @@
       }
     },
     {
-        "name": "dashboard.composition_events.triggered",
+        "name": "dashboard.composite_events.triggered",
         "vhost": "cctv-vf",
         "durable": true,
         "auto_delete": false,
@@ -132,7 +132,7 @@
     {
         "source": "processor.triggers.topic",
         "vhost": "cctv-vf",
-        "destination": "dashboard.composition_events.triggered",
+        "destination": "dashboard.composite_events.triggered",
         "destination_type": "queue",
         "routing_key": "#",
         "arguments": {}

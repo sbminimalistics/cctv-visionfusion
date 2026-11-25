@@ -18,23 +18,22 @@ export interface DeviceEvent {
   eventTime: Date | undefined;
   manufacturer: string;
   eventType: string;
-  rawPayload: Buffer;
 }
 
-export interface CompositionEvent {
+export interface CompositeEvent {
   uuid: string;
   id: string;
-  sources: CompositionSource[];
+  sources: CompositeEventSource[];
   eventTime: Date | undefined;
 }
 
-export interface CompositionSource {
+export interface CompositeEventSource {
   deviceId: string;
   eventType: string;
 }
 
 function createBaseDeviceEvent(): DeviceEvent {
-  return { uuid: "", deviceId: "", eventTime: undefined, manufacturer: "", eventType: "", rawPayload: Buffer.alloc(0) };
+  return { uuid: "", deviceId: "", eventTime: undefined, manufacturer: "", eventType: "" };
 }
 
 export const DeviceEvent: MessageFns<DeviceEvent> = {
@@ -53,9 +52,6 @@ export const DeviceEvent: MessageFns<DeviceEvent> = {
     }
     if (message.eventType !== "") {
       writer.uint32(42).string(message.eventType);
-    }
-    if (message.rawPayload.length !== 0) {
-      writer.uint32(50).bytes(message.rawPayload);
     }
     return writer;
   },
@@ -113,14 +109,6 @@ export const DeviceEvent: MessageFns<DeviceEvent> = {
             message.eventType = reader.string();
             continue;
           }
-          case 6: {
-            if (tag !== 50) {
-              break;
-            }
-
-            message.rawPayload = Buffer.from(reader.bytes());
-            continue;
-          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -152,11 +140,6 @@ export const DeviceEvent: MessageFns<DeviceEvent> = {
         : isSet(object.event_type)
         ? globalThis.String(object.event_type)
         : "",
-      rawPayload: isSet(object.rawPayload)
-        ? Buffer.from(bytesFromBase64(object.rawPayload))
-        : isSet(object.raw_payload)
-        ? Buffer.from(bytesFromBase64(object.raw_payload))
-        : Buffer.alloc(0),
     };
   },
 
@@ -177,9 +160,6 @@ export const DeviceEvent: MessageFns<DeviceEvent> = {
     if (message.eventType !== "") {
       obj.eventType = message.eventType;
     }
-    if (message.rawPayload.length !== 0) {
-      obj.rawPayload = base64FromBytes(message.rawPayload);
-    }
     return obj;
   },
 
@@ -193,17 +173,16 @@ export const DeviceEvent: MessageFns<DeviceEvent> = {
     message.eventTime = object.eventTime ?? undefined;
     message.manufacturer = object.manufacturer ?? "";
     message.eventType = object.eventType ?? "";
-    message.rawPayload = object.rawPayload ?? Buffer.alloc(0);
     return message;
   },
 };
 
-function createBaseCompositionEvent(): CompositionEvent {
+function createBaseCompositeEvent(): CompositeEvent {
   return { uuid: "", id: "", sources: [], eventTime: undefined };
 }
 
-export const CompositionEvent: MessageFns<CompositionEvent> = {
-  encode(message: CompositionEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const CompositeEvent: MessageFns<CompositeEvent> = {
+  encode(message: CompositeEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.uuid !== "") {
       writer.uint32(10).string(message.uuid);
     }
@@ -211,7 +190,7 @@ export const CompositionEvent: MessageFns<CompositionEvent> = {
       writer.uint32(18).string(message.id);
     }
     for (const v of message.sources) {
-      CompositionSource.encode(v!, writer.uint32(26).fork()).join();
+      CompositeEventSource.encode(v!, writer.uint32(26).fork()).join();
     }
     if (message.eventTime !== undefined) {
       Timestamp.encode(toTimestamp(message.eventTime), writer.uint32(34).fork()).join();
@@ -219,7 +198,7 @@ export const CompositionEvent: MessageFns<CompositionEvent> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): CompositionEvent {
+  decode(input: BinaryReader | Uint8Array, length?: number): CompositeEvent {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
     if (previousRecursionDepth >= 100) {
@@ -228,7 +207,7 @@ export const CompositionEvent: MessageFns<CompositionEvent> = {
     (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
     try {
       const end = length === undefined ? reader.len : reader.pos + length;
-      const message = createBaseCompositionEvent();
+      const message = createBaseCompositeEvent();
       while (reader.pos < end) {
         const tag = reader.uint32();
         switch (tag >>> 3) {
@@ -253,7 +232,7 @@ export const CompositionEvent: MessageFns<CompositionEvent> = {
               break;
             }
 
-            message.sources.push(CompositionSource.decode(reader, reader.uint32()));
+            message.sources.push(CompositeEventSource.decode(reader, reader.uint32()));
             continue;
           }
           case 4: {
@@ -276,12 +255,12 @@ export const CompositionEvent: MessageFns<CompositionEvent> = {
     }
   },
 
-  fromJSON(object: any): CompositionEvent {
+  fromJSON(object: any): CompositeEvent {
     return {
       uuid: isSet(object.uuid) ? globalThis.String(object.uuid) : "",
       id: isSet(object.id) ? globalThis.String(object.id) : "",
       sources: globalThis.Array.isArray(object?.sources)
-        ? object.sources.map((e: any) => CompositionSource.fromJSON(e))
+        ? object.sources.map((e: any) => CompositeEventSource.fromJSON(e))
         : [],
       eventTime: isSet(object.eventTime)
         ? fromJsonTimestamp(object.eventTime)
@@ -291,7 +270,7 @@ export const CompositionEvent: MessageFns<CompositionEvent> = {
     };
   },
 
-  toJSON(message: CompositionEvent): unknown {
+  toJSON(message: CompositeEvent): unknown {
     const obj: any = {};
     if (message.uuid !== "") {
       obj.uuid = message.uuid;
@@ -300,7 +279,7 @@ export const CompositionEvent: MessageFns<CompositionEvent> = {
       obj.id = message.id;
     }
     if (message.sources?.length) {
-      obj.sources = message.sources.map((e) => CompositionSource.toJSON(e));
+      obj.sources = message.sources.map((e) => CompositeEventSource.toJSON(e));
     }
     if (message.eventTime !== undefined) {
       obj.eventTime = message.eventTime.toISOString();
@@ -308,25 +287,25 @@ export const CompositionEvent: MessageFns<CompositionEvent> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<CompositionEvent>, I>>(base?: I): CompositionEvent {
-    return CompositionEvent.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<CompositeEvent>, I>>(base?: I): CompositeEvent {
+    return CompositeEvent.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<CompositionEvent>, I>>(object: I): CompositionEvent {
-    const message = createBaseCompositionEvent();
+  fromPartial<I extends Exact<DeepPartial<CompositeEvent>, I>>(object: I): CompositeEvent {
+    const message = createBaseCompositeEvent();
     message.uuid = object.uuid ?? "";
     message.id = object.id ?? "";
-    message.sources = object.sources?.map((e) => CompositionSource.fromPartial(e)) || [];
+    message.sources = object.sources?.map((e) => CompositeEventSource.fromPartial(e)) || [];
     message.eventTime = object.eventTime ?? undefined;
     return message;
   },
 };
 
-function createBaseCompositionSource(): CompositionSource {
+function createBaseCompositeEventSource(): CompositeEventSource {
   return { deviceId: "", eventType: "" };
 }
 
-export const CompositionSource: MessageFns<CompositionSource> = {
-  encode(message: CompositionSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const CompositeEventSource: MessageFns<CompositeEventSource> = {
+  encode(message: CompositeEventSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.deviceId !== "") {
       writer.uint32(10).string(message.deviceId);
     }
@@ -336,7 +315,7 @@ export const CompositionSource: MessageFns<CompositionSource> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): CompositionSource {
+  decode(input: BinaryReader | Uint8Array, length?: number): CompositeEventSource {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
     if (previousRecursionDepth >= 100) {
@@ -345,7 +324,7 @@ export const CompositionSource: MessageFns<CompositionSource> = {
     (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
     try {
       const end = length === undefined ? reader.len : reader.pos + length;
-      const message = createBaseCompositionSource();
+      const message = createBaseCompositeEventSource();
       while (reader.pos < end) {
         const tag = reader.uint32();
         switch (tag >>> 3) {
@@ -377,7 +356,7 @@ export const CompositionSource: MessageFns<CompositionSource> = {
     }
   },
 
-  fromJSON(object: any): CompositionSource {
+  fromJSON(object: any): CompositeEventSource {
     return {
       deviceId: isSet(object.deviceId)
         ? globalThis.String(object.deviceId)
@@ -392,7 +371,7 @@ export const CompositionSource: MessageFns<CompositionSource> = {
     };
   },
 
-  toJSON(message: CompositionSource): unknown {
+  toJSON(message: CompositeEventSource): unknown {
     const obj: any = {};
     if (message.deviceId !== "") {
       obj.deviceId = message.deviceId;
@@ -403,24 +382,16 @@ export const CompositionSource: MessageFns<CompositionSource> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<CompositionSource>, I>>(base?: I): CompositionSource {
-    return CompositionSource.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<CompositeEventSource>, I>>(base?: I): CompositeEventSource {
+    return CompositeEventSource.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<CompositionSource>, I>>(object: I): CompositionSource {
-    const message = createBaseCompositionSource();
+  fromPartial<I extends Exact<DeepPartial<CompositeEventSource>, I>>(object: I): CompositeEventSource {
+    const message = createBaseCompositeEventSource();
     message.deviceId = object.deviceId ?? "";
     message.eventType = object.eventType ?? "";
     return message;
   },
 };
-
-function bytesFromBase64(b64: string): Uint8Array {
-  return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
-}
-
-function base64FromBytes(arr: Uint8Array): string {
-  return globalThis.Buffer.from(arr).toString("base64");
-}
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
