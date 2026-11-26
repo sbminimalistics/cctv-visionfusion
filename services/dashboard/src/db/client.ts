@@ -20,7 +20,6 @@ const options: postgres.Options<{}> = {
 
 if (
     Object.values(options).reduce((acc, val: string | number) => {
-        console.log(val, val != null, val != "", val !== 0);
         return acc && val != null && val != "" && val !== 0;
     }, true) === false
 ) {
