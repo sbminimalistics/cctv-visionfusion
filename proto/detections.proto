@@ -5,7 +5,7 @@ package cctv_vf;
 import "google/protobuf/timestamp.proto";
 
 // Go module namespace
-option go_package = "/detections";
+option go_package = "sbminimalistics.com/cctv-visionfusion/proto/detections";
 
 // BoundingBox represents pixel coordinates of a detected object on the analyzed frame.
 message BoundingBox {

@@ -5,7 +5,7 @@ package cctv_vf;
 import "google/protobuf/timestamp.proto";
 
 // Go module namespace
-option go_package = "/downloads";
+option go_package = "sbminimalistics.com/cctv-visionfusion/proto/downloads";
 
 message DownloadInstruction {
     google.protobuf.Timestamp event_time = 1;

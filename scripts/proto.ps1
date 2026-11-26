@@ -35,6 +35,7 @@ protoc `
 --proto_path=proto `
 --go_out=services/backend/proto `
 --go_out=services/downloader/proto `
+--go_opt=module=sbminimalistics.com/cctv-visionfusion/proto `
 --plugin=protoc-gen-ts_proto="${projectRootDirForward}/services/dashboard/node_modules/.bin/protoc-gen-ts_proto.cmd" `
 --ts_proto_out="${projectRootDirForward}/services/dashboard/proto" `
 --ts_proto_opt=env=node,esModuleInterop=true `

@@ -23,20 +23,23 @@ _sym_db = _symbol_database.Default()
 
 
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
+import detections_pb2 as detections__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0c\x65vents.proto\x12\x07\x63\x63tv_vf\x1a\x1fgoogle/protobuf/timestamp.proto\"\x88\x01\n\x0b\x44\x65viceEvent\x12\x0c\n\x04uuid\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12.\n\nevent_time\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x14\n\x0cmanufacturer\x18\x04 \x01(\t\x12\x12\n\nevent_type\x18\x05 \x01(\t\"\x8a\x01\n\x0e\x43ompositeEvent\x12\x0c\n\x04uuid\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12.\n\x07sources\x18\x03 \x03(\x0b\x32\x1d.cctv_vf.CompositeEventSource\x12.\n\nevent_time\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"=\n\x14\x43ompositeEventSource\x12\x11\n\tdevice_id\x18\x01 \x01(\t\x12\x12\n\nevent_type\x18\x02 \x01(\tB\tZ\x07/eventsb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0c\x65vents.proto\x12\x07\x63\x63tv_vf\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x10\x64\x65tections.proto\"_\n\tDetection\x12+\n\ndetections\x18\x01 \x03(\x0b\x32\x17.cctv_vf.DetectedObject\x12%\n\x05\x66rame\x18\x02 \x01(\x0b\x32\x16.cctv_vf.FrameMetadata\"\xc2\x01\n\x0b\x44\x65viceEvent\x12\x0c\n\x04uuid\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12.\n\nevent_time\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x14\n\x0cmanufacturer\x18\x04 \x01(\t\x12\x12\n\nevent_type\x18\x05 \x01(\t\x12*\n\tdetection\x18\x06 \x01(\x0b\x32\x12.cctv_vf.DetectionH\x00\x88\x01\x01\x42\x0c\n\n_detection\"\x8a\x01\n\x0e\x43ompositeEvent\x12\x0c\n\x04uuid\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12.\n\x07sources\x18\x03 \x03(\x0b\x32\x1d.cctv_vf.CompositeEventSource\x12.\n\nevent_time\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"=\n\x14\x43ompositeEventSource\x12\x11\n\tdevice_id\x18\x01 \x01(\t\x12\x12\n\nevent_type\x18\x02 \x01(\tB4Z2sbminimalistics.com/cctv-visionfusion/proto/eventsb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'events_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z\007/events'
-  _globals['_DEVICEEVENT']._serialized_start=59
-  _globals['_DEVICEEVENT']._serialized_end=195
-  _globals['_COMPOSITEEVENT']._serialized_start=198
-  _globals['_COMPOSITEEVENT']._serialized_end=336
-  _globals['_COMPOSITEEVENTSOURCE']._serialized_start=338
-  _globals['_COMPOSITEEVENTSOURCE']._serialized_end=399
+  _globals['DESCRIPTOR']._serialized_options = b'Z2sbminimalistics.com/cctv-visionfusion/proto/events'
+  _globals['_DETECTION']._serialized_start=76
+  _globals['_DETECTION']._serialized_end=171
+  _globals['_DEVICEEVENT']._serialized_start=174
+  _globals['_DEVICEEVENT']._serialized_end=368
+  _globals['_COMPOSITEEVENT']._serialized_start=371
+  _globals['_COMPOSITEEVENT']._serialized_end=509
+  _globals['_COMPOSITEEVENTSOURCE']._serialized_start=511
+  _globals['_COMPOSITEEVENTSOURCE']._serialized_end=572
 # @@protoc_insertion_point(module_scope)

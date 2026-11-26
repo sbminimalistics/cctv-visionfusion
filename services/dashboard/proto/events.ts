@@ -6,11 +6,17 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { DetectedObject, FrameMetadata } from "./detections";
 import { Timestamp } from "./google/protobuf/timestamp";
 
 export const protobufPackage = "cctv_vf";
 
 export const protobufFileName = "events.proto";
+
+export interface Detection {
+  detections: DetectedObject[];
+  frame: FrameMetadata | undefined;
+}
 
 export interface DeviceEvent {
   uuid: string;
@@ -18,6 +24,7 @@ export interface DeviceEvent {
   eventTime: Date | undefined;
   manufacturer: string;
   eventType: string;
+  detection?: Detection | undefined;
 }
 
 export interface CompositeEvent {
@@ -32,8 +39,97 @@ export interface CompositeEventSource {
   eventType: string;
 }
 
+function createBaseDetection(): Detection {
+  return { detections: [], frame: undefined };
+}
+
+export const Detection: MessageFns<Detection> = {
+  encode(message: Detection, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.detections) {
+      DetectedObject.encode(v!, writer.uint32(10).fork()).join();
+    }
+    if (message.frame !== undefined) {
+      FrameMetadata.encode(message.frame, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Detection {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const previousRecursionDepth = (reader as any).__tsProtoDecodeDepth ?? 0;
+    if (previousRecursionDepth >= 100) {
+      throw new globalThis.Error("protobuf decode recursion limit exceeded");
+    }
+    (reader as any).__tsProtoDecodeDepth = previousRecursionDepth + 1;
+    try {
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseDetection();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
+
+            message.detections.push(DetectedObject.decode(reader, reader.uint32()));
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
+
+            message.frame = FrameMetadata.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    } finally {
+      (reader as any).__tsProtoDecodeDepth = previousRecursionDepth;
+    }
+  },
+
+  fromJSON(object: any): Detection {
+    return {
+      detections: globalThis.Array.isArray(object?.detections)
+        ? object.detections.map((e: any) => DetectedObject.fromJSON(e))
+        : [],
+      frame: isSet(object.frame) ? FrameMetadata.fromJSON(object.frame) : undefined,
+    };
+  },
+
+  toJSON(message: Detection): unknown {
+    const obj: any = {};
+    if (message.detections?.length) {
+      obj.detections = message.detections.map((e) => DetectedObject.toJSON(e));
+    }
+    if (message.frame !== undefined) {
+      obj.frame = FrameMetadata.toJSON(message.frame);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Detection>, I>>(base?: I): Detection {
+    return Detection.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Detection>, I>>(object: I): Detection {
+    const message = createBaseDetection();
+    message.detections = object.detections?.map((e) => DetectedObject.fromPartial(e)) || [];
+    message.frame = (object.frame !== undefined && object.frame !== null)
+      ? FrameMetadata.fromPartial(object.frame)
+      : undefined;
+    return message;
+  },
+};
+
 function createBaseDeviceEvent(): DeviceEvent {
-  return { uuid: "", deviceId: "", eventTime: undefined, manufacturer: "", eventType: "" };
+  return { uuid: "", deviceId: "", eventTime: undefined, manufacturer: "", eventType: "", detection: undefined };
 }
 
 export const DeviceEvent: MessageFns<DeviceEvent> = {
@@ -52,6 +148,9 @@ export const DeviceEvent: MessageFns<DeviceEvent> = {
     }
     if (message.eventType !== "") {
       writer.uint32(42).string(message.eventType);
+    }
+    if (message.detection !== undefined) {
+      Detection.encode(message.detection, writer.uint32(50).fork()).join();
     }
     return writer;
   },
@@ -109,6 +208,14 @@ export const DeviceEvent: MessageFns<DeviceEvent> = {
             message.eventType = reader.string();
             continue;
           }
+          case 6: {
+            if (tag !== 50) {
+              break;
+            }
+
+            message.detection = Detection.decode(reader, reader.uint32());
+            continue;
+          }
         }
         if ((tag & 7) === 4 || tag === 0) {
           break;
@@ -140,6 +247,7 @@ export const DeviceEvent: MessageFns<DeviceEvent> = {
         : isSet(object.event_type)
         ? globalThis.String(object.event_type)
         : "",
+      detection: isSet(object.detection) ? Detection.fromJSON(object.detection) : undefined,
     };
   },
 
@@ -160,6 +268,9 @@ export const DeviceEvent: MessageFns<DeviceEvent> = {
     if (message.eventType !== "") {
       obj.eventType = message.eventType;
     }
+    if (message.detection !== undefined) {
+      obj.detection = Detection.toJSON(message.detection);
+    }
     return obj;
   },
 
@@ -173,6 +284,9 @@ export const DeviceEvent: MessageFns<DeviceEvent> = {
     message.eventTime = object.eventTime ?? undefined;
     message.manufacturer = object.manufacturer ?? "";
     message.eventType = object.eventType ?? "";
+    message.detection = (object.detection !== undefined && object.detection !== null)
+      ? Detection.fromPartial(object.detection)
+      : undefined;
     return message;
   },
 };

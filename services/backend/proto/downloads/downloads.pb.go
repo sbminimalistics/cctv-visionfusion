@@ -185,8 +185,7 @@ const file_downloads_proto_rawDesc = "" +
 	"\vobject_name\x18\x03 \x01(\tR\n" +
 	"objectName\x12!\n" +
 	"\fcontent_type\x18\x04 \x01(\tR\vcontentType\x12\x1c\n" +
-	"\textension\x18\x05 \x01(\tR\textensionB\fZ\n" +
-	"/downloadsb\x06proto3"
+	"\textension\x18\x05 \x01(\tR\textensionB7Z5sbminimalistics.com/cctv-visionfusion/proto/downloadsb\x06proto3"
 
 var (
 	file_downloads_proto_rawDescOnce sync.Once

@@ -330,7 +330,7 @@ const file_detections_proto_rawDesc = "" +
 	"detections\x18\x03 \x03(\v2\x17.cctv_vf.DetectedObjectR\n" +
 	"detections\x12,\n" +
 	"\x05frame\x18\x04 \x01(\v2\x16.cctv_vf.FrameMetadataR\x05frame\x12=\n" +
-	"\fprocessed_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vprocessedAtB\rZ\v/detectionsb\x06proto3"
+	"\fprocessed_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vprocessedAtB8Z6sbminimalistics.com/cctv-visionfusion/proto/detectionsb\x06proto3"
 
 var (
 	file_detections_proto_rawDescOnce sync.Once

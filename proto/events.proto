@@ -3,9 +3,15 @@ syntax = "proto3";
 package cctv_vf;
 
 import "google/protobuf/timestamp.proto";
+import "detections.proto";
 
 // Go module namespace
-option go_package = "/events";
+option go_package = "sbminimalistics.com/cctv-visionfusion/proto/events";
+
+message Detection {
+    repeated cctv_vf.DetectedObject detections = 1;
+    cctv_vf.FrameMetadata frame = 2;
+}
 
 message DeviceEvent {
     string uuid = 1;
@@ -13,6 +19,7 @@ message DeviceEvent {
     google.protobuf.Timestamp event_time = 3;
     string manufacturer = 4;
     string event_type = 5;
+    optional Detection detection = 6; 
 }
 
 message CompositeEvent {
