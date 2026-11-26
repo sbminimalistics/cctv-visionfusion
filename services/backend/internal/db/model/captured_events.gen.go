@@ -16,8 +16,9 @@ type CapturedEvent struct {
 	Src       *string   `gorm:"column:src;type:text" json:"src"`
 	SrcType   *string   `gorm:"column:src_type;type:text" json:"src_type"`
 	Type      *string   `gorm:"column:type;type:text" json:"type"`
-	CreatedAt time.Time `gorm:"column:created_at;type:timestamp with time zone;not null;index:idx_events_created_at,priority:1;default:now()" json:"created_at"`
+	CreatedAt time.Time `gorm:"column:created_at;type:timestamp with time zone;not null;index:idx_captured_events_cleanup,priority:1;index:idx_events_created_at,priority:1;default:now()" json:"created_at"`
 	TraceID   *string   `gorm:"column:trace_id;type:text;index:idx_events_trace_id,priority:1" json:"trace_id"`
+	Status    string    `gorm:"column:status;type:text;not null;default:pending" json:"status"`
 }
 
 // TableName CapturedEvent's table name

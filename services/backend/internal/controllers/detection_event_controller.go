@@ -8,6 +8,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
@@ -19,14 +20,14 @@ import (
 type DetectionEventController struct {
 	rmqClient *messaging.RMQClient
 	wg        *sync.WaitGroup
-	service   *services.DetectionService
+	service   *services.DetectionWorkflowService
 }
 
 func NewDetectionEventController(
 	ctx context.Context,
 	rmq *messaging.RMQClient,
 	parentWG *sync.WaitGroup,
-	service *services.DetectionService,
+	service *services.DetectionWorkflowService,
 ) *DetectionEventController {
 	var controller = DetectionEventController{
 		rmqClient: rmq,
@@ -66,9 +67,13 @@ func (r *DetectionEventController) detectionCompletedHandler(msgCtx context.Cont
 	defer span.End()
 	slog.InfoContext(detectionCtx, "detection result received", "msq_raw", &msg)
 
-	r.service.SaveDetections(detectionCtx, &msg)
+	err := r.service.CompleteDetection(detectionCtx, &msg)
 
-	// r.service.SaveEvent(msgCtx, msg)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return fmt.Errorf("save detections: %w", err)
+	}
 
 	return nil
 }

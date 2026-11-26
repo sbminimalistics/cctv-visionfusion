@@ -171,7 +171,7 @@ func (r *SSEListener) readAlertStream(ctx context.Context, resp *http.Response) 
 			continue
 		}
 
-		fields, err := r.parser.Parse(data)
+		fields, err := r.parser.Parse(eventCtx, data)
 
 		if err != nil {
 			slog.Warn("[SSE] error parsing packet", "error", err)

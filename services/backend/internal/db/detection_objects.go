@@ -26,7 +26,9 @@ func (r *DetectionObjectsRepo) CreateBatch(ctx context.Context, objs []*model.De
 	if len(objs) == 0 {
 		return nil
 	}
-	return r.db.WithContext(ctx).Create(objs).Error
+
+	db := ExtractTx(ctx, r.db)
+	return db.Create(objs).Error
 }
 
 // GetByUUID fetches a single detection object by its ID primary key.

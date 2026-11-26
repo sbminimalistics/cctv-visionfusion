@@ -12,18 +12,22 @@ type Services struct {
 	DownloadLinkService *services.DownloadLinkService
 	EventService        *services.EventService
 	DetectionService    *services.DetectionService
+	DetectionWFService  *services.DetectionWorkflowService
 }
 
 func WireServices(ctx context.Context, store *db.Store) Services {
 	slog.Info("starting download link service ...")
+
 	dlService := services.InitDownloadLinkService(ctx)
 	eventService := services.InitEventService(store)
 	detectionService := services.InitDetectionService(store)
+	detectionWFService := services.InitDetectionWorkflowService(store, detectionService, eventService)
 	slog.Info("services started")
 
 	return Services{
 		DownloadLinkService: dlService,
 		EventService:        eventService,
 		DetectionService:    detectionService,
+		DetectionWFService:  detectionWFService,
 	}
 }

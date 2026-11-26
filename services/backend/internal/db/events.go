@@ -68,3 +68,11 @@ func (r *EventRepo) UpdateTraceID(ctx context.Context, eventID uuid.UUID, traceI
 	}
 	return nil
 }
+
+// UpdateStatus updates status on an existing event.
+func (r *EventRepo) UpdateStatus(ctx context.Context, eventUUID uuid.UUID, status string) error {
+	db := ExtractTx(ctx, r.db)
+	return db.Model(&model.CapturedEvent{}).
+		Where("id = ?", eventUUID).
+		Update("status", status).Error
+}

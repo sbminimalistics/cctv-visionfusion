@@ -64,7 +64,8 @@ func main() {
 
 	// wire controllers
 	_ = bootstrap.WireEdgeDeviceEventController(ctx, &wg, rmqClient, services.EventService)
-	_ = bootstrap.WireDetectionEventController(ctx, &wg, rmqClient, services.DetectionService)
+
+	_ = bootstrap.WireDetectionEventController(ctx, &wg, rmqClient, services.DetectionWFService)
 
 	// wire api enpoints
 	slog.Info("starting API", "port", config.Config.API.Port)

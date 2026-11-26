@@ -1,6 +1,7 @@
 package edge_device
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -33,10 +34,10 @@ type HikvisionPacketParser struct {
 	PacketParser
 }
 
-func (h *HikvisionPacketParser) Parse(packet []byte) (BasicParsedMessage, error) {
+func (h *HikvisionPacketParser) Parse(ctx context.Context, packet []byte) (BasicParsedMessage, error) {
 	var ev HikvisionParsedMessage
 	if err := xml.Unmarshal(packet, &ev); err == nil {
-		slog.Info("@device event", "type", ev.EventType, "description", ev.EventDescription, "ip", ev.IPAddress)
+		slog.DebugContext(ctx, "parsed event", "type", ev.EventType, "description", ev.EventDescription, "ip", ev.IPAddress)
 
 		return &ev, nil
 	} else {

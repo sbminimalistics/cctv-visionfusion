@@ -6,6 +6,8 @@ import (
 	"gorm.io/gorm"
 )
 
+type txCtxKey struct{}
+
 type Store struct {
 	db               *gorm.DB
 	Events           *EventRepo
@@ -22,8 +24,24 @@ func NewStore(gdb *gorm.DB) *Store {
 	}
 }
 
-func (s *Store) WithTx(ctx context.Context, fn func(txStore *Store) error) error {
+func (s *Store) WithTx(ctx context.Context, fn func(txCtx context.Context, txStore *Store) error) error {
+	// reuse existing transaction if already inside an active WithTx block
+	if txDB, ok := ctx.Value(txCtxKey{}).(*gorm.DB); ok && txDB != nil {
+		return fn(ctx, NewStore(txDB.WithContext(ctx)))
+	}
+
+	// start a new transaction and store it in txCtx for any nested calls
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		return fn(NewStore(tx))
+		txCtx := context.WithValue(ctx, txCtxKey{}, tx)
+		return fn(txCtx, NewStore(tx.WithContext(txCtx)))
 	})
+}
+
+// ExtractTx returns the active transactional *gorm.DB from ctx if one exists,
+// otherwise falls back to fallbackDB.WithContext(ctx).
+func ExtractTx(ctx context.Context, fallbackDB *gorm.DB) *gorm.DB {
+	if txDB, ok := ctx.Value(txCtxKey{}).(*gorm.DB); ok && txDB != nil {
+		return txDB.WithContext(ctx)
+	}
+	return fallbackDB.WithContext(ctx)
 }

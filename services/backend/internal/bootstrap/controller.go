@@ -64,9 +64,14 @@ func WireDetectionEventController(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	rmq *messaging.RMQClient,
-	service *services.DetectionService,
+	detectionWFService *services.DetectionWorkflowService,
 ) *controllers.DetectionEventController {
-	controller := controllers.NewDetectionEventController(ctx, rmq, wg, service)
+	controller := controllers.NewDetectionEventController(
+		ctx,
+		rmq,
+		wg,
+		detectionWFService,
+	)
 
 	return controller
 }

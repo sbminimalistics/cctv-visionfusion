@@ -5,7 +5,8 @@ create table
         src_type text,
         type text,
         created_at timestamptz NOT NULL DEFAULT now (),
-        trace_id text
+        trace_id text,
+        status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'empty'))
     );
 
 create table
@@ -45,3 +46,7 @@ WHERE
 CREATE INDEX idx_detections_event_id ON detections (event_id);
 
 CREATE INDEX idx_detection_objects_detection_id ON detection_objects (id);
+
+CREATE INDEX idx_captured_events_cleanup ON captured_events (created_at)
+WHERE
+    status IN ('pending', 'empty')

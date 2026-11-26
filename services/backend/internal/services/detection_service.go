@@ -47,7 +47,7 @@ func (r *DetectionService) SaveDetections(ctx context.Context, data *detections.
 		TraceID:          traceID,
 		DetectedAt:       data.GetProcessedAt().AsTime(),
 	}
-	if err := r.store.WithTx(ctx, func(tx *db.Store) error {
+	if err := r.store.WithTx(ctx, func(ctx context.Context, tx *db.Store) error {
 		if err := tx.Detections.Create(ctx, detectRec); err != nil {
 			return err
 		}
