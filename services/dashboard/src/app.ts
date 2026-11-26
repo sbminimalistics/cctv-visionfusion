@@ -14,7 +14,6 @@ import { logger } from "./logger";
 
 // dotenv.config({ path: path.resolve(process.cwd(), "./../../.env_dev") });
 
-console.log("app.ts");
 logger.info({"position": "app"})
 
 const getEnvVar = (envVar: string): string => {
@@ -55,16 +54,13 @@ async function bootstrap() {
     );
     await rmqClient.consumeFromQueue<CompositeEvent>(
         RMQ_QUEUE_DASHBOARD_COMPOSITE_EVENTS_TRIGGERED,
-        (msg) => {
-            // console.log("composite event content:", msg);
-            // sseController.handleStream,
-        },
+        rmqMessageController.handleCompositeEventMessage,
         CompositeEvent,
     );
 
     // database wiring
-    const res = await db`select version();`;
-    console.log("db version:", res);
+    const [{ version }] = await db<{ version: string }[]>`select version();`;
+    console.log("db version:", version);
 
     // api endpoints wiring
     const app = new Hono();

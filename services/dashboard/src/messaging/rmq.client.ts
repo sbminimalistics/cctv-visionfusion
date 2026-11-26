@@ -50,10 +50,7 @@ export default class RMQClient {
             );
         }
         try {
-            console.log(
-                "Connecting to RabbitMQ Broker!",
-                this.connectionOptions,
-            );
+            console.log("consume RabbitMQ queue", queueName);
             const connection = await amqp.connect(this.connectionOptions, {
                 timeout: 10000,
             });

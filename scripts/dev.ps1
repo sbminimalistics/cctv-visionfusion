@@ -343,7 +343,7 @@ function Stop-ProcessTree {
 function Stop-AllServices {
     # don't let a single missing PID abort the rest of shutdown or docker cleanup
     $ErrorActionPreference = "Continue"
-    Write-Host "`n[DEV] Shutting down all services and child process trees..." -ForegroundColor Red
+    Write-Host "`n[dev] Shutting down all services and child process trees..." -ForegroundColor Red
 
     # kill only tracked PIDs that are still alive
     foreach ($name in @($Pids.Keys)) {
@@ -424,7 +424,7 @@ try {
 
             Start-Sleep -Milliseconds 50
             if (-not $proc.HasExited) {
-                Write-Output "__PID__:$($proc.Id)"
+                Write-Output "(PID $($proc.Id))"
             }
 
             $outTask = $proc.StandardOutput.ReadLineAsync()
@@ -441,7 +441,7 @@ try {
                 if ($errTask.IsCompleted) {
                     $errLine = $errTask.Result
                     if ($null -ne $errLine) {
-                        Write-Output " $errLine"
+                        Write-Output $errLine
                         $errTask = $proc.StandardError.ReadLineAsync()
                     }
                 }
@@ -454,7 +454,7 @@ try {
 
     # intercept Ctrl+C cleanly so PowerShell doesn't abort the finally block mid-cleanup
     [Console]::TreatControlCAsInput = $true
-    Write-Host "[DEV] All services started. Press Ctrl+C to stop.`n" -ForegroundColor White
+    Write-Host "[dev] All services started. Press Ctrl+C to stop.`n" -ForegroundColor White
 
     while ($true) {
         # check for Ctrl+C keypress
@@ -478,7 +478,7 @@ try {
             foreach ($line in $lines) {
                 if ($line -is [string] -and $line.StartsWith("__PID__:")) {
                     $Pids[$item.Name] = [int]$line.Substring(8)
-                    Write-Host [int]$line.Substring(8)
+                    Write-Host "[$($item.Name)] (PID $($Pids[$item.Name]))"
                     continue
                 }
                 Write-Host "[$($item.Name)] " -ForegroundColor $item.Color -NoNewline
