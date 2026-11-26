@@ -11,7 +11,7 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
-	detections "sbminimalistics.com/cctv-visionfusion/proto/detections"
+	detections "sbminimalistics.com/cctv-visionfusion/downloader/proto/detections"
 	sync "sync"
 	unsafe "unsafe"
 )

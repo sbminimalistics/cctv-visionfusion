@@ -33,11 +33,25 @@ if (-not (Test-Path -Path \$IncludeCacheDir)) {
 # Execute unified compilation
 protoc `
 --proto_path=proto `
---go_out=services/backend/proto `
---go_out=services/downloader/proto `
 --go_opt=module=sbminimalistics.com/cctv-visionfusion/proto `
+--go_out=services/backend/proto `
 --plugin=protoc-gen-ts_proto="${projectRootDirForward}/services/dashboard/node_modules/.bin/protoc-gen-ts_proto.cmd" `
 --ts_proto_out="${projectRootDirForward}/services/dashboard/proto" `
 --ts_proto_opt=env=node,esModuleInterop=true `
 --python_out=services/cv/proto `
 proto/*.proto
+
+# package name used for imports in downloader Go service project
+$basePkg = "sbminimalistics.com/cctv-visionfusion/downloader/proto"
+
+# build --go_opt=M mapping for every file found in proto path
+$mOpts = Get-ChildItem -Path "proto/*.proto" | ForEach-Object {
+    "--go_opt=M$($_.Name)=$basePkg/$($_.BaseName)"
+}
+
+protoc `
+  --proto_path=proto `
+  --go_opt=module=$basePkg `
+  $mOpts `
+  --go_out=services/downloader/proto `
+  proto/*.proto
