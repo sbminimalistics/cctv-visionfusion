@@ -60,7 +60,7 @@ func main() {
 	}
 
 	// wire services
-	services := bootstrap.WireServices(ctx, store)
+	services := bootstrap.WireServices(ctx, store, rmqClient)
 
 	// wire controllers
 	_ = bootstrap.WireEdgeDeviceEventController(ctx, &wg, rmqClient, services.EventService)

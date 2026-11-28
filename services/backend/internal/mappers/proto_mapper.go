@@ -6,8 +6,10 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"sbminimalistics.com/cctv-visionfusion/internal/config"
+	"sbminimalistics.com/cctv-visionfusion/internal/db/model"
 	"sbminimalistics.com/cctv-visionfusion/internal/edge_device"
 	"sbminimalistics.com/cctv-visionfusion/internal/event"
+	"sbminimalistics.com/cctv-visionfusion/proto/detections"
 	"sbminimalistics.com/cctv-visionfusion/proto/downloads"
 	"sbminimalistics.com/cctv-visionfusion/proto/events"
 )
@@ -60,4 +62,20 @@ func toProtoSources(configs []config.CompositionSourceConfig) []*events.Composit
 		}
 	}
 	return protos
+}
+
+func StoredEventToProto(evCaptured *model.CapturedEvent, detections *detections.DetectionCompletedEvent) *events.DeviceEvent {
+	var event = events.DeviceEvent{
+		Uuid:         evCaptured.ID,
+		DeviceId:     *evCaptured.Src,
+		Manufacturer: *evCaptured.SrcType,
+		EventType:    *evCaptured.Type,
+		EventTime:    timestamppb.New(evCaptured.CreatedAt),
+	}
+
+	event.Detection = &events.Detection{
+		Frame:      detections.Frame,
+		Detections: detections.Detections,
+	}
+	return &event
 }

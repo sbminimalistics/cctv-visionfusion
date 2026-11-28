@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"reflect"
 	"regexp"
@@ -74,8 +73,6 @@ func (c *EdgeDeviceEventController) RegisterEventComposition(composition *event.
 }
 
 func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing []config.Route) {
-	var tracer = otel.Tracer(pkgName)
-
 	c.wg.Add(1)
 	go func() {
 		defer c.wg.Done()
@@ -101,86 +98,48 @@ func (c *EdgeDeviceEventController) StartMessaging(ctx context.Context, routing 
 				if !ok {
 					return
 				}
-
-				eventCtx, span := tracer.Start(
-					ev.Ctx,
-					"controller.event.handling",
-					trace.WithAttributes(
-						attribute.String("device_id", ev.DeviceID),
-						attribute.String("event_id", ev.GetUUID().String()),
-					),
-				)
-
-				now := time.Now().UTC()
-				allow := c.throttler.Allow(ev.DeviceID, ev.Parsed.GetEventType(), now)
-				if !allow {
-					slog.DebugContext(eventCtx, "edge device event suppressed (cooldown period active)")
-					continue
-				} else {
-					slog.DebugContext(eventCtx, "edge device event allowed (cooldown period inactive)")
-				}
-
-				mDevice, _ := baggage.NewMember("device.id", ev.DeviceID)
-				bag, _ := baggage.New(mDevice)
-				eventCtx = baggage.ContextWithBaggage(eventCtx, bag)
-
-				for _, comp := range c.compositions {
-					comp.TrackEvent(ev)
-				}
-				routingKey := strings.Join([]string{"device.", ev.DeviceID, ".event"}, "")
-				for _, route := range routing {
-					re := route.Source.EventTypeRegexp.Regexp
-					match := re.MatchString(ev.Parsed.GetEventType())
-					if route.Source.SourceID == ev.DeviceID && match {
-						deviceEvent := mappers.DeviceEventToProto(ev)
-						bytes, err := proto.Marshal(deviceEvent)
-						if err != nil {
-							slog.ErrorContext(eventCtx, "failed marshaling proto.Message", "error", err)
-						}
-						c.rmqClient.Publish(eventCtx, route.DestinationExchange, routingKey, bytes)
-					}
-				}
-
-				// if ev.Parsed.GetEventType() == "fielddetection" {
-				if ev.Parsed.GetEventType() == "VMD" {
-					c.service.SaveEvent(eventCtx, ev)
-					now := time.Now().UTC()
-					token, expiry, err := services.GetDownloadLinkService().GetNewToken(
-						ev.GetAbsolutePicturePath(),
-						fmt.Sprintf("%s/%d/%d", ev.DeviceID, now.Year(), now.Month()),
-						ev.GetUUID(),
-					)
-
-					if err != nil {
-						slog.ErrorContext(eventCtx, "token generation failed", "error", err)
-					} else {
-						source := mappers.DownloadInstructionBase{
-							Token:       token,
-							TokenExpiry: expiry,
-							RedeemPath:  "v1/links/redeem",
-						}
-						instruction := mappers.DeviceInstructionToProto(source)
-
-						bytes, _ := proto.Marshal(instruction)
-						c.rmqClient.Publish(
-							eventCtx,
-							"requests.download.screenshot",
-							routingKey,
-							bytes,
-						)
-					}
-				}
-
-				slog.InfoContext(eventCtx, "handled edge device event",
-					"device_id", ev.DeviceID,
-					"event_id", ev.GetUUID().String(),
-					"event_type", ev.Parsed.GetEventType(),
-				)
-
-				span.End()
+				c.handleIncomingEvent(ev)
 			}
 		}
 	}()
+}
+
+func (c *EdgeDeviceEventController) handleIncomingEvent(ev edge_device.EventPacket) {
+	var tracer = otel.Tracer(pkgName)
+	eventCtx, span := tracer.Start(
+		ev.Ctx,
+		"controller.event.handling",
+		trace.WithAttributes(
+			attribute.String("device_id", ev.DeviceID),
+			attribute.String("event_id", ev.GetUUID().String()),
+		),
+	)
+	defer span.End()
+
+	allow := c.throttler.Allow(ev.DeviceID, ev.Parsed.GetEventType(), time.Now().UTC())
+	if !allow {
+		slog.DebugContext(eventCtx, "edge device event suppressed (cooldown period active)")
+		return
+	}
+	slog.DebugContext(eventCtx, "edge device event allowed (cooldown period inactive)")
+
+	mDevice, _ := baggage.NewMember("device.id", ev.DeviceID)
+	bag, _ := baggage.New(mDevice)
+	eventCtx = baggage.ContextWithBaggage(eventCtx, bag)
+
+	for _, comp := range c.compositions {
+		comp.TrackEvent(ev)
+	}
+
+	c.service.ProcessEvent(eventCtx, ev)
+
+	slog.InfoContext(eventCtx, "handled edge device event",
+		"device_id", ev.DeviceID,
+		"event_id", ev.GetUUID().String(),
+		"event_type", ev.Parsed.GetEventType(),
+	)
+
+	span.End()
 }
 
 type UUIDHolder interface {

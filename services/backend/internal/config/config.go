@@ -96,6 +96,7 @@ type RouteSource struct {
 type Route struct {
 	Source              RouteSource `yaml:"source"`
 	DestinationExchange string      `yaml:"destination_exchange"`
+	OnlyWithDetections  bool        `yaml:"only_with_detections"`
 }
 
 type port int
